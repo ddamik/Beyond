@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:background="#ffffffff"
+    android:orientation="vertical"
+    tools:context="com.example.lee.beyond.NavigationDisplayActivity">
+
+    <!-- 길찾기 경로 버튼 -->
+    <LinearLayout
+        android:id="@+id/searchPathLayout"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_alignParentTop="true"
+        android:background="#ffffffff">
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="길찾기 경로"
+            android:textStyle="bold"
+            android:id="@+id/btn_searchPath"/>
+    </LinearLayout>
+
+    <!-- 지도 위 텍스트 부분 -->
+    <LinearLayout
+        android:id="@+id/locationInfoLayout"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1.2"
+        android:layout_below="@id/searchPathLayout">
+
+        <!-- 내위치 -> 내 목적지 텍스트 부분 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <!-- 내 위치 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/startInfo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="#ff8c3f00"
+                    android:textSize="20dp"
+                    android:textStyle="bold"
+                    android:text="내 위치"
+                    android:gravity="center_horizontal"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="출발지점"
+                    android:textStyle="bold"
+                    android:textSize="12dp"
+                    android:gravity="center_horizontal"/>
+            </LinearLayout> <!-- 내 위치 -->
+
+
+            <!-- 가운데 화살표 -->
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:src="@drawable/arrow"/>
+
+
+            <!-- 내 목적지 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/destInfo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="#ff8c3f00"
+                    android:textStyle="bold"
+                    android:text="내 목적지"
+                    android:textSize="20dp"
+                    android:gravity="center_horizontal"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="도착지점"
+                    android:textStyle="bold"
+                    android:textSize="12dp"
+                    android:gravity="center_horizontal"/>
+            </LinearLayout> <!-- 내 목적지 -->
+        </LinearLayout> <!-- 내 위치 -> 내 목적지 -->
+    </LinearLayout> <!-- 지도 위 텍스트 부분 -->
+
+    <RelativeLayout
+        android:id="@+id/tmap"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="10">
+
+    </RelativeLayout>
+
+    <!-- 경로정보 보이기 버튼 -->
+    <LinearLayout
+        android:id="@+id/showPathLayout"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="5dp"
+        android:layout_weight="1"
+        android:layout_alignParentBottom="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <Button
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="match_parent"
+                android:id="@+id/btn_currentPoint"
+                android:text="현재 위치"
+                android:textStyle="bold"/>
+
+            <Button
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="match_parent"
+                android:id="@+id/btn_startGuide"
+                android:text="경로안내 시작"
+                android:textStyle="bold"/>
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>
