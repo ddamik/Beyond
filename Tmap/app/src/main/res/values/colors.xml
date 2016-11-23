@@ -4,4 +4,9 @@
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
     <color name="transparent">#FF4081</color>
+    <color name="bg_black">#000000</color>
+    <color name="bg_black_20">#AA000000</color>
+    <color name="font_white">#FFFFFF</color>
+    <color name="tmap_font_color">#2E75B6</color>
+    <color name="grid_font_color">#000000</color>
 </resources>

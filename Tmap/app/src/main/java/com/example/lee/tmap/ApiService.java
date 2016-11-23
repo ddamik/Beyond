@@ -1,17 +1,15 @@
 package com.example.lee.tmap;
 
-import javax.security.auth.callback.Callback;
+import com.example.lee.tmap.ValueObject.RecentPathVO;
+import com.example.lee.tmap.ValueObject.ReverseGeocodingVO;
+import com.example.lee.tmap.ValueObject.TmapDataVO;
 
-import okhttp3.ResponseBody;
 import retrofit2.Call;
-import retrofit2.GsonConverterFactory;
-import retrofit2.Retrofit;
 import retrofit2.http.Field;
 import retrofit2.http.FormUrlEncoded;
 import retrofit2.http.GET;
 import retrofit2.http.Headers;
 import retrofit2.http.POST;
-import retrofit2.http.Path;
 import retrofit2.http.Query;
 
 /**
@@ -19,20 +17,46 @@ import retrofit2.http.Query;
  */
 public interface ApiService {
     public static final String API_URL = "https://apis.skplanetx.com";
-
-    @GET("comments")
-    Call<ResponseBody> getComment(@Query("postId") int postId);
+    public static final String SERVER_URL = "http://52.78.14.6:3000";
 
     @Headers({
-            "Accept: application/json",
-            "appKey: 483f055b-19f2-3a22-a3fb-935bc1684b0b"
+        "accept: application/json",
+        "appKey: 483f055b-19f2-3a22-a3fb-935bc1684b0b"
+    })
+    @GET("/tmap/geo/reversegeocoding?version=1")
+    Call<ReverseGeocodingVO> getAddress(
+      @Query("lat") String lat,
+      @Query("lon") String lon,
+      @Query("coordType") String coordType,
+      @Query("addressType") String addressType
+    );
+
+
+    @Headers({
+        "accept: application/json",
+        "appKey: 483f055b-19f2-3a22-a3fb-935bc1684b0b"
     })
     @FormUrlEncoded
     @POST("/tmap/routes?version=1")
-    Call<TmapDataModel> getGuidePath(
-            @Field("startX") String startX,
-            @Field("startY") String startY,
+    Call<TmapDataVO> getGuidePath(
             @Field("endX") String endX,
             @Field("endY") String endY,
-            @Field("reqCoordType") String reqCoordType);
+            @Field("reqCoordType") String reqCoordType,
+            @Field("startX") String startX,
+            @Field("startY") String startY
+            );
+
+
+
+    /*==========
+        [ Server Database ]
+        1. 즐겨찾기 [ /routerecord/ ]
+    ========== */
+    @Headers({
+        "Accept: application/json",
+    })
+    @GET("/routerecord/")
+    Call<RecentPathVO> getRecentPath(
+        // @Query("USER_UUID") String USER_UUID
+    );
 }

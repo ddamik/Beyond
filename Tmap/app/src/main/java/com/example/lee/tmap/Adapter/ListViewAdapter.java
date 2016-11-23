@@ -1,4 +1,4 @@
-package com.example.lee.tmap;
+package com.example.lee.tmap.Adapter;
 
 import android.app.ListActivity;
 import android.content.Context;
@@ -8,6 +8,8 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
+import com.example.lee.tmap.POIItem;
+import com.example.lee.tmap.R;
 import com.skp.Tmap.TMapPoint;
 
 import java.util.ArrayList;
