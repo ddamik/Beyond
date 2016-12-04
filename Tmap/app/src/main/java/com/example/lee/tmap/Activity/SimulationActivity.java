@@ -89,6 +89,7 @@ public class SimulationActivity extends Activity {
 
     static int simul_coordinates_index = 0;
     static int simul_info_index = 0;
+    static int simul_turntype_index = 0;
 
     static double simul_next_latitude = 0.0;
     static double simul_next_longitude = 0.0;
@@ -111,7 +112,6 @@ public class SimulationActivity extends Activity {
     static double simul_info_distance = 0.0;         // [ 다음 info_list 까지의 거리 ]
     static final double COORDINATES_DISTANCE = 3;
 
-    static double simul_remain_disatnce = 0.0;
     static double simul_gap_latitude = 0.0;
     static double simul_gap_longitude = 0.0;
     static int simul_turnType = 0;
@@ -121,6 +121,8 @@ public class SimulationActivity extends Activity {
 
     public static Thread thread;
     public static boolean threadFlag = true;
+
+    static int remain_distance = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -176,6 +178,7 @@ public class SimulationActivity extends Activity {
         tMapMarkerItem.setIcon(bitmap);
         tMapMarkerItem.setPosition(1, 1);
         tmapview.addMarkerItem("", tMapMarkerItem);
+        tmapview.setIconVisibility(true);
 
         // [ 안내종료 버튼 ]
         img_btn_exit.setOnClickListener(new View.OnClickListener() {
@@ -522,16 +525,25 @@ public class SimulationActivity extends Activity {
         Log.i(TAG, "============================== [ SImulation ] ==============================");
         Log.i(TAG, "모의주행을 시작합니다.");
 //        img_direction.setImageResource(R.drawable.direction_11);
-        simul_info_index++;
+        simul_info_index += 2;
+        simul_turnType = info_list.get(simul_info_index).getTurnType();
+
         simul_coordinates_index++;
 
         thread = new Thread(){
             @Override
             public void run() {
                 while (threadFlag) {
-                    Log.i(TAG, "[ Thread.sleep(1000) ] ");
+                    Log.i(TAG, "[ Thread.sleep(100) ] ");
+                    Log.i(TAG, "[ Current Information index & turnTyep ] : " + simul_info_index + " / " + info_list.get(simul_info_index).getTurnType());
                     try {
-                        Thread.sleep(1000);
+                        Thread.sleep(500);
+                        // [ turnType == 0 인 경우는 목표지점까지의 거리정보뿐이기때문에 얻을 정보가 없다. 따라서, index를 추가하고 continue; ]
+                        if (info_list.get(simul_info_index).getTurnType() == 0){
+                            simul_info_index++;
+                            simul_turnType = info_list.get(simul_info_index).getTurnType();
+                            directionHandler.sendEmptyMessage(0);
+                        }
                         handler.sendEmptyMessage(0);
 
                         // [ ArrayList들의 size보다 index가 같거나 크면 outOfIndex Error 따라서 예외처리를 해준다. ]
@@ -542,12 +554,6 @@ public class SimulationActivity extends Activity {
                             finish();
                             break;
                         }
-
-                        // [ turnType == 0 인 경우는 목표지점까지의 거리정보뿐이기때문에 얻을 정보가 없다. 따라서, index를 추가하고 continue; ]
-                        if (info_list.get(simul_info_index).getTurnType() == 0){
-                            simul_info_index++;
-                        }
-
 
                         // [ 도착지 ]
                         // [ simul_destination_check ]
@@ -585,11 +591,6 @@ public class SimulationActivity extends Activity {
                             simul_destination_latitude = info_list.get(simul_info_index).getLatitude();
                             simul_destination_longitude = info_list.get(simul_info_index).getLongitude();
                             Log.i(TAG, "[ Information TurnType / Information_index ] : " + info_list.get(simul_info_index).getTurnType() + " / " + simul_info_index);
-
-                            // [ 해야할 일 ]
-                            // [ turnType 바탕으로 img_direction 값 설정 ]
-//                            this.changeDirectionImg(info_list.get(simul_info_index).getTurnType());
-                            simul_turnType = info_list.get(simul_info_index).getTurnType();
 
                             simul_direction_check = false;            // [ 계속해서 다음 방향을 알기위한 지점의 위도 경도값과 turnType을 알 필요가 없기 때문이다. ]
                             simul_check10 = true;
@@ -648,10 +649,15 @@ public class SimulationActivity extends Activity {
 
                             // [ 방향 전환 경도 위도와 다음 GPS의 경도 위도가 같으면 방향 전환을 해야할 때이다. ]
                             if (simul_next_latitude == simul_destination_latitude && simul_next_longitude == simul_destination_longitude) {
-                                Log.i(TAG, "[ 방향전환을 하겠습니다. ]");
+
                                 simul_info_index++;             // [ 방향 전환을 위해 information index 추가 ]
                                 simul_coordinates_index++;      // [ 방향 전환과 동시에 GPS 값도 추가하여 다음 안내를 받는다. ]
                                 simul_direction_check = true;   // [ 방향전환 후, 다음 next_latitude와 next_longitude를 구하기 위해서. ]
+
+                                Log.i(TAG, "[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[ Change simul_direction_check ]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]");
+                                // [ turnType 바탕으로 img_direction 값 설정 ]
+                                // [ simul_info_index 값이 추가되고 나서 방향이미지를 변경해줘야 한다. ]Log.i()
+                                simul_turnType = info_list.get(simul_info_index).getTurnType();
                             } else {
                                 Log.i(TAG, "[ Coordinates List 값만 추가하겠습니다. ]");
                                 simul_coordinates_index++;      // [ 곡선을 위한 GPS값에 도달한 것이지, 방향 전환 값에 도달한 것이 아니기때문에, coordinates index만 추가한다. ]
@@ -662,8 +668,7 @@ public class SimulationActivity extends Activity {
                         e.printStackTrace();
                     }   // [ End try-catch ]
 
-                    // [ 그 다음 coordinates 값을 가져오기 위해 현재의 while문을 빠져나가야 한다. ]
-                    // if(simul_next_check) break;
+
                 }   // [ End Whlie ]
             }   // [ End Run ]
         };  // [ End Thread ]
@@ -690,25 +695,34 @@ public class SimulationActivity extends Activity {
 
     // [ Direction 이미지 변경 ]
     public void changeDirectionImg(int turnType){
-        Toast.makeText(getApplicationContext(),"[ 현재 Index & TurnTyep ] : " + simul_info_index + " / " + simul_turnType, Toast.LENGTH_LONG).show();
         Log.i(TAG, "[ 방향전환이 이뤄졌습니다. TurnType은 : " + turnType + " 입니다. ] ");
-        if( turnType == 200 ) img_direction.setImageResource(R.drawable.direction_200);
-        else if( turnType == 201 ) img_direction.setImageResource(R.drawable.direction_201);
-        else if( turnType == 11 ) img_direction.setImageResource(R.drawable.direction_11);
-        else if( turnType == 12 ) img_direction.setImageResource(R.drawable.direction_12);
-        else if( turnType == 13 ) img_direction.setImageResource(R.drawable.direction_13);
-        else if( turnType == 14 ) img_direction.setImageResource(R.drawable.direction_14);
+        switch (turnType){
+            case 200:
+                img_direction.setImageResource(R.drawable.direction_200);
+                Log.i(TAG, "[ Direction 200 ] : 출발지입니다. ");
+                break;
+            case 201:
+                img_direction.setImageResource(R.drawable.direction_201);
+                Log.i(TAG, "[ Direction 201 ] : 도착지입니다. ");
+                break;
+            case 11:
+                img_direction.setImageResource(R.drawable.direction_11);
+                Log.i(TAG, "[ Direction 011 ] : 직진입니다. ");
+                break;
+            case 12:
+                img_direction.setImageResource(R.drawable.direction_12);
+                Log.i(TAG, "[ Direction 012 ] : 좌회전입니다. ");
+                break;
+            case 13:
+                img_direction.setImageResource(R.drawable.direction_13);
+                Log.i(TAG, "[ Direction 013 ] : 우회전입니다. ");
+                break;
+            case 14:
+                img_direction.setImageResource(R.drawable.direction_14);
+                Log.i(TAG, "[ Direction 014 ] : 유턴입니다. ");
+                break;
+        }
     }   // [ End Direction 이미지 변경 ]
-
-    // [ 남은거리 변경 tv_remain_distance ]
-    public void changeRemainDistance(int current_distance){
-        int remain_distance = total_distance - current_distance;
-        strRemain = exception.strRemainDistance(total_distance, remain_distance);
-        tv_remain_distance.setText(strRemain);
-
-        Log.i(TAG, "[ 남은거리를 계산합니다. ] : " + strRemain);
-    }   // [ End Change Remain Distance ]
-
 
     private Handler handler = new Handler(){
         @Override
@@ -717,10 +731,27 @@ public class SimulationActivity extends Activity {
             strCurrentDistance = exception.strDistance((int)simul_info_distance);
             tv_distance.setText(strCurrentDistance);
 
-            // [ 방향 전환 ]
-            if(simul_direction_check) changeDirectionImg(simul_turnType);
+            // [ 총 남은거리 ]
+            remain_distance = total_distance - current_distance;
+            Log.i(TAG, "[ Remain Distance ] : " + remain_distance);
+            strRemain = exception.strRemainDistance(total_distance, remain_distance);
+            tv_remain_distance.setText(strRemain);
+
+            // [ 현재위치 Icon ]
+            tpoint.setLatitude(current_latitude);
+            tpoint.setLongitude(current_longitude);
+            tMapMarkerItem.setTMapPoint(tpoint);
+
+            tmapview.addMarkerItem("", tMapMarkerItem);
         }
     };   // [ End Handler ]
+
+    private Handler directionHandler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            changeDirectionImg(simul_turnType);
+        }
+    };   // [ End directionHandler ]
 
     public void destination(){
         Toast.makeText(getApplicationContext(), "도착지 부근입니다. 모의주행을 종료합니다.", Toast.LENGTH_LONG).show();
