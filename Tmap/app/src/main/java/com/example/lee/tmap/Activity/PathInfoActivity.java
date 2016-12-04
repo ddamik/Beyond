@@ -163,7 +163,7 @@ public class PathInfoActivity extends Activity {
          /*
             T-map 초기 세팅
          */
-        tMapLayout = (RelativeLayout) findViewById(R.id.tmap);
+        tMapLayout = (RelativeLayout) findViewById(R.id.path_info_tmap);
         tmapview = new TMapView(this);
         tmapview.setSKPMapApiKey(APP_KEY);
         tmapview.setLanguage(TMapView.LANGUAGE_KOREAN);
@@ -236,7 +236,7 @@ public class PathInfoActivity extends Activity {
         });
     }
 
-    // 길 안내 시작
+    // 길 안내 정보 셋팅
     public void startGuide(TMapPoint startPoint, TMapPoint endPoint) {
         tmapview.removeAllMarkerItem();
 

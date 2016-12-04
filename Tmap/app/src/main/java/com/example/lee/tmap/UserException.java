@@ -89,6 +89,7 @@ public class UserException {
         else strTotal = "0." + total_distance/100;
 
         if( remain_distance >= 1000 ) strRemain = remain_distance / 1000 + "." + (remain_distance % 1000 ) / 100;
+        else if( remain_distance <= 0 ) strRemain = "0.0";
         else strRemain = "0." + remain_distance/100;
 
         return result = strRemain + " / " + strTotal +"km";

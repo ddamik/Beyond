@@ -152,7 +152,7 @@ public class GuideActivity extends Activity implements TMapGpsManager.onLocation
 
 
 
-        tMapLayout = (RelativeLayout) findViewById(R.id.tmap);
+        tMapLayout = (RelativeLayout) findViewById(R.id.guide_tmap);
         tmapview = new TMapView(this);
         tmapview.setSKPMapApiKey(APP_KEY);
         tmapview.setLanguage(TMapView.LANGUAGE_KOREAN);
@@ -180,7 +180,7 @@ public class GuideActivity extends Activity implements TMapGpsManager.onLocation
         gps.setMinTime(GPS_MIN_TIME);
         gps.setMinDistance(GPS_MIN_DISTANCE);
         // gps.setProvider(TMapGpsManager.NETWORK_PROVIDER);       // 현재 위치를 가져온다.
-        gps.setProvider(TMapGpsManager.LOCATION_SERVICE);
+        gps.setProvider(TMapGpsManager.GPS_PROVIDER);
         gps.OpenGps();
 
 
@@ -245,23 +245,17 @@ public class GuideActivity extends Activity implements TMapGpsManager.onLocation
                         if( i == 0 ) {
                             String strDistance = exception.strDistance(response.body().getFeatures().get(i).getProperties().getTotalDistance());
                             tv_distance.setText(strDistance);
-
                             Log.i(TAG, "[ Properties ] Total Distance : " + response.body().getFeatures().get(i).getProperties().getTotalDistance());
                             Log.i(TAG, "[ Properties ] Total Time : " + response.body().getFeatures().get(i).getProperties().getTotalTime());
                             Log.i(TAG, "[ Properties ] Total Fare : " + response.body().getFeatures().get(i).getProperties().getTotalFare());
                             Log.i(TAG, "[ Properties ] Total TaxiFare : " + response.body().getFeatures().get(i).getProperties().getTaxiFare());
-                            Log.i(TAG, "[ Properties ] Distance : " + response.body().getFeatures().get(i).getProperties().getDistance());
-                            Log.i(TAG, "[ Properties ] Description : " + response.body().getFeatures().get(i).getProperties().getDescription());
-                            Log.i(TAG, "[ Properties ] TurnType : " + response.body().getFeatures().get(i).getProperties().getTurnType());
-                            Log.i(TAG, "[ Properties ] Index : " + response.body().getFeatures().get(i).getProperties().getIndex());
+                        }
 
-                        }else{
-                            Log.i(TAG, "[ Properties ] Distance : " + response.body().getFeatures().get(i).getProperties().getDistance());
-                            Log.i(TAG, "[ Properties ] Description : " + response.body().getFeatures().get(i).getProperties().getDescription());
-                            Log.i(TAG, "[ Properties ] TurnType : " + response.body().getFeatures().get(i).getProperties().getTurnType());
-                            Log.i(TAG, "[ Properties ] Index : " + response.body().getFeatures().get(i).getProperties().getIndex());
+                        Log.i(TAG, "[ Properties ] Distance : " + response.body().getFeatures().get(i).getProperties().getDistance());
+                        Log.i(TAG, "[ Properties ] Description : " + response.body().getFeatures().get(i).getProperties().getDescription());
+                        Log.i(TAG, "[ Properties ] TurnType : " + response.body().getFeatures().get(i).getProperties().getTurnType());
+                        Log.i(TAG, "[ Properties ] Index : " + response.body().getFeatures().get(i).getProperties().getIndex());
 
-                        }   // if
                     }   // for
                 }   // if(response.isSuccessful())
             }   // onResponse

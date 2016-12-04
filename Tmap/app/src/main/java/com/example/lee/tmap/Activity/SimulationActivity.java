@@ -2,20 +2,24 @@ package com.example.lee.tmap.Activity;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.Window;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.lee.tmap.ApiService;
 import com.example.lee.tmap.R;
@@ -24,11 +28,14 @@ import com.example.lee.tmap.ValueObject.SimulationCoordinatesVO;
 import com.example.lee.tmap.ValueObject.SimulationVO;
 import com.example.lee.tmap.ValueObject.TmapDataVO;
 import com.skp.Tmap.TMapData;
+import com.skp.Tmap.TMapMarkerItem;
 import com.skp.Tmap.TMapPoint;
 import com.skp.Tmap.TMapPolyLine;
 import com.skp.Tmap.TMapView;
 
 import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -47,7 +54,7 @@ public class SimulationActivity extends Activity {
     // [ Map ]
     public static final String APP_KEY = "483f055b-19f2-3a22-a3fb-935bc1684b0b";
     public TMapData tMapData;
-    private RelativeLayout tMapLayout = null;
+    private RelativeLayout tMapLayout;
     private TMapView tmapview = null;
     public static int ZOOM_LEVEL = 19;
 
@@ -67,10 +74,53 @@ public class SimulationActivity extends Activity {
     TextView tv_distance, tv_remain_distance, tv_arriaval_time;
     public UserException exception;
 
+    // [ 총 남은거리 ]
+    public int total_distance = 0;
+    public String strRemain = "";
+
 
     // [ Simulation ]
     public ArrayList<SimulationVO> info_list = new ArrayList<>();
     public ArrayList<SimulationCoordinatesVO> coordinates_list = new ArrayList<>();
+
+    // [ Simulation Variable ]
+    static TMapPoint tpoint = null;
+    static TMapMarkerItem tMapMarkerItem = null;
+
+    static int simul_coordinates_index = 0;
+    static int simul_info_index = 0;
+
+    static double simul_next_latitude = 0.0;
+    static double simul_next_longitude = 0.0;
+
+    static double simul_destination_latitude = 0.0;
+    static double simul_destination_longitude = 0.0;
+
+    static double simul_current_latitude = 0.0;
+    static double simul_current_longitude = 0.0;
+
+    static boolean simul_destination_check = false;
+    static boolean simul_direction_check = true;
+    static boolean simul_next_check = true;
+    static boolean simul_check50 = false;
+    static boolean simul_check30 = false;
+    static boolean simul_check10 = false;
+
+    static double simul_addValue = 0.0;
+    static double simul_coordi_distance = 0.0;       // [ 다음 coordinates_list 까지의 거리 ]
+    static double simul_info_distance = 0.0;         // [ 다음 info_list 까지의 거리 ]
+    static final double COORDINATES_DISTANCE = 3;
+
+    static double simul_remain_disatnce = 0.0;
+    static double simul_gap_latitude = 0.0;
+    static double simul_gap_longitude = 0.0;
+    static int simul_turnType = 0;
+
+    static int current_distance = 0;
+    static String strCurrentDistance = "";
+
+    public static Thread thread;
+    public static boolean threadFlag = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,7 +132,7 @@ public class SimulationActivity extends Activity {
 
         // layout 겹치기
         Window window = getWindow();
-        window.setContentView(R.layout.activity_guide);     // 바닥에 깔릴 layout
+        window.setContentView(R.layout.activity_simulation);     // 바닥에 깔릴 layout
         LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         LinearLayout linear = (LinearLayout) inflater.inflate(R.layout.activity_simulation_info, null);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
@@ -113,6 +163,41 @@ public class SimulationActivity extends Activity {
             }
         });
         tmapview.setCenterPoint(startPoint.getLongitude(), startPoint.getLatitude(), true);         // [ 현재 위치로 가기 ]
+
+        // [ Simulation ]
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inSampleSize = 2;
+        Bitmap bitmap = BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.guide_arrow_blue, options);
+
+        tpoint = new TMapPoint(startPoint.getLatitude(), startPoint.getLongitude());
+        tMapMarkerItem = new TMapMarkerItem();
+        tMapMarkerItem.setTMapPoint(tpoint);
+        tMapMarkerItem.setVisible(TMapMarkerItem.VISIBLE);
+        tMapMarkerItem.setIcon(bitmap);
+        tMapMarkerItem.setPosition(1, 1);
+        tmapview.addMarkerItem("", tMapMarkerItem);
+
+        // [ 안내종료 버튼 ]
+        img_btn_exit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(getApplicationContext(), "모의주행을 종료합니다.", Toast.LENGTH_LONG).show();
+                startActivity(new Intent(SimulationActivity.this, MainActivity.class));
+                overridePendingTransition(R.anim.anim_slide_fade_in, R.anim.anim_slide_out_left);
+
+                threadFlag = false;
+                finish();
+            }
+        }); // [ 안내종료 버튼 ]
+
+        img_btn_currentPoint.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.i(TAG, "[ Set Center Point ] ");
+                tmapview.setCenterPoint(127.074347, 37.549635, true);
+//                simulation();
+            }
+        });
 
         simulation();
     }   // onCreate
@@ -147,21 +232,15 @@ public class SimulationActivity extends Activity {
     // 지도 셋팅
     public void initMapView() {
 
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inSampleSize = 2;
-        Bitmap bitmap = BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.guide_arrow_blue, options);
-
-
-        tMapLayout = (RelativeLayout) findViewById(R.id.tmap);
+        tMapLayout = (RelativeLayout) findViewById(R.id.simulation_tmap);
         tmapview = new TMapView(this);
         tmapview.setSKPMapApiKey(APP_KEY);
         tmapview.setLanguage(TMapView.LANGUAGE_KOREAN);
-        tmapview.setIcon(bitmap);                           // 아이콘 설정
 
         tmapview.setIconVisibility(true);                   // 현재 위치로 표시될 아이콘을 표시
         tmapview.setZoomLevel(ZOOM_LEVEL);                       // 지도레벨 설정 7~19
         tmapview.setMapType(TMapView.MAPTYPE_STANDARD);     // STANDARD: 일반지도 / SATELLITE: 위성지도[미지원] / HYBRID: 하이브리드[미지원] / TRAFFIC: 실시간 교통지도
-        tmapview.setCompassMode(false);                      // 단말의 방향에 따라 움직이는 나침반 모드
+        tmapview.setCompassMode(true);                      // 단말의 방향에 따라 움직이는 나침반 모드
         tmapview.setTrackingMode(true);                     // 화면중심을 단말의 현재위치로 이동시켜주는 모드
         tmapview.setMapPosition(TMapView.POSITION_NAVI);    // 네비게이션 모드 ( 화면 중심의 아래쪽으로 중심좌표를 설정 )
         tMapLayout.addView(tmapview);
@@ -422,12 +501,6 @@ public class SimulationActivity extends Activity {
             [ 2. 홀수 ]
                 distance
                 coordinates 여러개
-
-            [ 1. 짝수 index 10m 이내까지 간다. ]
-            [ 2. 짝수 index 에서 다음 turnType을 변경 ]
-            [ 3. 그 다음 홀수 index에서 distance 설정 ]
-            [ 4. 그 다음 index++ 후, 1번부터 반복 ]
-            [ 5. turnType이 200이면 종료한다. ]
         */
 
         /*
@@ -438,223 +511,218 @@ public class SimulationActivity extends Activity {
             4. 거리가 50m일때, 30m일때, 10m일때,
             5. 10m이내면 info_list의 index++;
          */
-        int coordinates_index = 0;
-        int info_index = 0;
 
-        double next_latitude = 0.0;
-        double next_longitude = 0.0;
+        simul_current_latitude = coordinates_list.get(simul_coordinates_index).getLatitude();
+        simul_current_longitude = coordinates_list.get(simul_coordinates_index).getLongitude();
 
-        double destination_latitude = 0.0;
-        double destination_longitude = 0.0;
+        // [ 출발지 ]
+        // [ img direction 이미지를 설정한다. ]
+        // [ 다음 GPS지점과 다음 방향지점을 알기위해 각각의 index값을 ++ ]
+        Toast.makeText(getApplicationContext(), "모의주행을 시작합니다.", Toast.LENGTH_LONG).show();
+        Log.i(TAG, "============================== [ SImulation ] ==============================");
+        Log.i(TAG, "모의주행을 시작합니다.");
+//        img_direction.setImageResource(R.drawable.direction_11);
+        simul_info_index++;
+        simul_coordinates_index++;
 
-        double current_latitude = coordinates_list.get(coordinates_index).getLatitude();
-        double current_longitude = coordinates_list.get(coordinates_index).getLongitude();
+        thread = new Thread(){
+            @Override
+            public void run() {
+                while (threadFlag) {
+                    Log.i(TAG, "[ Thread.sleep(1000) ] ");
+                    try {
+                        Thread.sleep(1000);
+                        handler.sendEmptyMessage(0);
+
+                        // [ ArrayList들의 size보다 index가 같거나 크면 outOfIndex Error 따라서 예외처리를 해준다. ]
+                        if (info_list.size() <= simul_info_index || coordinates_list.size() <= simul_coordinates_index) {
+                            Log.i(TAG, "============================== [ SImulation Error ] ==============================");
+                            Log.i(TAG, "Index의 값이 ArrayList의 Size를 넘었습니다.");
+                            threadFlag = false;
+                            finish();
+                            break;
+                        }
+
+                        // [ turnType == 0 인 경우는 목표지점까지의 거리정보뿐이기때문에 얻을 정보가 없다. 따라서, index를 추가하고 continue; ]
+                        if (info_list.get(simul_info_index).getTurnType() == 0){
+                            simul_info_index++;
+                        }
 
 
-        boolean destination_check = false;
-        boolean direction_check = true;
-        boolean next_check = true;
-        boolean check50 = false;
-        boolean check30 = false;
-        boolean check10 = false;
+                        // [ 도착지 ]
+                        // [ simul_destination_check ]
+                        // [ 안내를 종료하고, 메인 페이지로 넘기자. ]
+                        if (info_list.get(simul_info_index).getTurnType() == 201) {
+                            // [ 도착지 ]
+                            // [ destination_check : 도착지 10m 이내인 경우 true ]
+                            threadFlag = false;
 
-        double addValue = 0.0;
-        double coordi_distance = 0.0;       // [ 다음 coordinates_list 까지의 거리 ]
-        double info_distance = 0.0;         // [ 다음 info_list 까지의 거리 ]
-        double remain_disatnce = 0.0;
-        double gap_latitude = 0.0;
-        double gap_longitude = 0.0;
+                            // [ Thread 안에서 Toast(Thread)를 실행시켜서 오류가 발생한다. ]
+                            // [ 따라서, Handler를 사용한다ㅣ .]
+                            Handler mHandler = new Handler(Looper.getMainLooper());
+                            mHandler.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(getApplicationContext(), "도착지 부근입니다. 모의주행을 종료합니다.", Toast.LENGTH_LONG).show();
+                                }
+                            }, 0);
+                            Log.i(TAG, "============================== [ SImulation ] ==============================");
+                            Log.i(TAG, "도착지 10m 이내입니다. 모의주행을 종료합니다.");
+                            simul_destination_check = true;
 
-        while(true){
-            if(info_list.get(info_index).getTurnType() == 0 ) info_index++;
+                            // [ 메인페이지로 넘기기 ]
+                            startActivity(new Intent(SimulationActivity.this, MainActivity.class));
+                            overridePendingTransition(R.anim.anim_slide_fade_in, R.anim.anim_slide_out_left);
+                            finish();
+                        }   // [ if(도착지) ]
 
-            if(info_list.size() <= info_index || coordinates_list.size() <= coordinates_index){
-                Log.i(TAG,"============================== [ SImulation ] ==============================");
-                Log.i(TAG, "Information Index 값은 " + info_index + " 입니다.");
-                Log.i(TAG, "Information List의 Size 값은 " + info_list.size()+ " 입니다.");
-                Log.i(TAG, "Coordinates Index 값은 " + coordinates_index + " 입니다.");
-                Log.i(TAG, "Coordinates List의 Size 값은 " + coordinates_list.size()+ " 입니다.");
-                finish();
-                break;
-            }
+                        // [ 방향정보를 얻는 곳이다. ]
+                        // [ info_list에서 다음 방향정보를 가지고있는 위도 경도값을 destination에 넣는다. ]
+                        // [ direction_check 값은 false로 변경하여, 다음 방향을 알고싶을때까지 이 조건문을 건너뛴다. ]
+                        // [ check10~50 은 목표지점까지의 반경거리를 한번씩만 체크하기위한 flag값이다. ]
+                        if (simul_direction_check) {
+                            // [ 10m 이내라서 다음 목표지점을 찾아야 한다. Coordinates 값이 아닌 Information 값 ]
+                            simul_destination_latitude = info_list.get(simul_info_index).getLatitude();
+                            simul_destination_longitude = info_list.get(simul_info_index).getLongitude();
+                            Log.i(TAG, "[ Information TurnType / Information_index ] : " + info_list.get(simul_info_index).getTurnType() + " / " + simul_info_index);
 
-            if(info_list.get(info_index).getTurnType() == 200 ){
-                // [ 출발지 ]
-                Log.i(TAG,"============================== [ SImulation ] ==============================");
-                Log.i(TAG, "모의주행을 시작합니다.");
-                img_direction.setImageResource(R.drawable.direction_11);
-                info_index++;
-                coordinates_index += 1;
-                continue;
-            }   // [ if(출발지) ]
+                            // [ 해야할 일 ]
+                            // [ turnType 바탕으로 img_direction 값 설정 ]
+//                            this.changeDirectionImg(info_list.get(simul_info_index).getTurnType());
+                            simul_turnType = info_list.get(simul_info_index).getTurnType();
 
-            if(info_list.get(info_index).getTurnType() == 201){
-                // [ 도착지 ]
-                // [ destination_check : 도착지 10m 이내인 경우 true ]
-                Log.i(TAG, "============================== [ SImulation ] ==============================");
-                Log.i(TAG, "도착지 10m 이내입니다. 모의주행을 종료합니다.");
-                destination_check = true;
-                break;
-            }   // [ if(도착지) ]
+                            simul_direction_check = false;            // [ 계속해서 다음 방향을 알기위한 지점의 위도 경도값과 turnType을 알 필요가 없기 때문이다. ]
+                            simul_check10 = true;
+                            simul_check30 = true;
+                            simul_check50 = true;
+                        }   // [ if(direction_check) ]
 
-            if(direction_check) {
-                // [ 10m 이내라서 다음 목표지점을 찾아야 한다. Coordinates 값이 아닌 Information 값 ]
-                destination_latitude = info_list.get(info_index).getLatitude();
-                destination_longitude = info_list.get(info_index).getLongitude();
-                Log.i(TAG, "[ Information TurnType / Information_index ] : " + info_list.get(info_index).getTurnType() + " / " + info_index);
+                        // [ 다음 GPS지점의 위도 경도값을 가져온다. ]
+                        // [ coordinates_list에서 다음 GPS값을 가져와 next 변수에 넣는다. ]
+                        // [ addValue : 모의주행을 1m단위로 하기위해 다음 GPS까지의 거리를 구해놓은 값이다. ]
+                        // [ (다음위치 - 현재위치) / 거리 = 1m단위의 위도 경도값을 얻는다. ]
+                        if (simul_next_check) {
+                            simul_next_latitude = coordinates_list.get(simul_coordinates_index).getLatitude();                  // [ 다음 coordinates 위도 경도를 설정한다. ]
+                            simul_next_longitude = coordinates_list.get(simul_coordinates_index).getLongitude();
 
-                direction_check = false;            //
-                check10 = true;
-                check30 = true;
-                check50 = true;
-                Log.i(TAG,"============================== [ SImulation ] ==============================");
-                Log.i(TAG, "현재의 Infomation Index 값은 : " + info_index + " 입니다.");
-                Log.i(TAG, "다음 목표지점의 경도와 위도 정보입니다. Latitude / Longitude : " + des_latitude + " / " + des_longitude);
+                            simul_addValue = exception.calDistance(simul_current_latitude, simul_current_longitude, simul_next_latitude, simul_next_longitude); // [ 현재 위치에서 1m씩 이동하기 위해 다음 위치까지의 거리를 구한다. ]
+                            simul_gap_latitude = (simul_next_latitude - simul_current_latitude) / simul_addValue;                                               // [ 현재 위치에 위도 경도를 더한다. ]
+                            simul_gap_longitude = (simul_next_longitude - simul_current_longitude) / simul_addValue;
+                            simul_next_check = false;        // [ 다음 coordinates 까지와의 거리가 2m 이내일때까지는 이 조건문에 들어올 필요가 없다. ]
+                        }   // [ if(next_check) ]
 
-                info_distance = exception.calDistance(current_latitude, current_longitude, des_latitude, des_longitude);
-                Log.i(TAG, "현재 좌표값과 다음 Information까지의 거리는 : " + info_distance + " 입니다.");
-                Log.i(TAG, "현재의 TurnType 값은 " + info_list.get(info_index).getTurnType() + " 입니다.");
-                Log.i(TAG, info_list.get(info_index).getDescription());
 
-            }   // [ if(direction_check) ]
+                        // [ 현재 위도경도에 1m 단위 모의주행을 위한 위도경도값을 누적시킨다. ]
+                        // [ TMap의 중심을 현재위치로 잡는다. ]
+                        simul_current_latitude += simul_gap_latitude;                                           // [ 현재 위치에서 1m 단위로 경도 위도값을 추가해준다. ]
+                        simul_current_longitude += simul_gap_longitude;
 
-            // [ 1. 현재와 다음 coordinates_list[i] 까지의 거리를 구한다. ]
-            // [ 2. 차이만큼 위도+= 경도+= 해준다. ]
-            if( next_check ) {
-                next_latitude = coordinates_list.get(coordinates_index).getLatitude();
-                next_longitude = coordinates_list.get(coordinates_index).getLongitude();
-                addValue = exception.calDistance(current_latitude, current_longitude, next_latitude, next_longitude);
-                gap_latitude = (next_latitude - current_latitude) / addValue;
-                gap_longitude = (next_longitude - current_longitude) / addValue;
-                next_check = false;     // [ 다음 coordinates 까지와의 거리가 2m 이내일때까지는 이 조건문에 들어올 필요가 없다. ]
-                Log.i(TAG,"============================== [ SImulation ] ==============================");
-                Log.i(TAG, "Coordinates 값을 변경합니다. ");
-                Log.i(TAG, "Coordinates 까지의 거리는 " + addValue + "m 입니다.");
-            }   // [ if(next_check) ]
+//                            tmapview.setLocationPoint(simul_current_longitude, simul_current_latitude);     // // [ 현재 위치로 가기 & 현재 위치를 지도의 중심으로 ]
+                        tmapview.setCenterPoint(simul_current_longitude, simul_current_latitude, true);
 
-            // [ Thread로 변경 부분 ]
-                    while(true) {
-                        current_latitude += gap_latitude;
-                        current_longitude += gap_longitude;
-                        coordi_distance = exception.calDistance(current_latitude, current_longitude, next_latitude, next_longitude);
-                        info_distance = exception.calDistance(current_latitude, current_longitude, des_latitude, des_longitude);
-//            Log.i(TAG,"============================== [ SImulation ] ==============================");
-                        Log.i(TAG, "현재 좌표값과 다음 Coordinates까지의 거리는 : " + coordi_distance + " 입니다.");
-                        // [ 현재의 경도 위도에 += gap 경도 위도 Thread 돌리기 ]
-                        // [ 5m 이내로 되면 coordinates_index++ ]
-                        // [ 다음 coordinates[i] 의 경도 위도 == destination 경도 위도 라면, turnType 변경 및 남은거리 변경 ]
+                        simul_coordi_distance = exception.calDistance(simul_current_latitude, simul_current_longitude, simul_next_latitude, simul_next_longitude);                  // [ 다음 GPS 좌표까지 거리 ] / 곡선 처리를 위한 GPS
+                        simul_info_distance = exception.calDistance(simul_current_latitude, simul_current_longitude, simul_destination_latitude, simul_destination_longitude);      // [ 다음 방향안내 위도, 경도까지 거리 ]
 
-                        if (coordi_distance < 2) {
+                        // [ 해야할 일 ]
+                        // [ 총 남은거리를 1m씩 줄여야 한다. ]
+                        // [ 이동거리를 누적하여 100m단위로 0.1km 씩 감소시킨다. ]
+                        current_distance++;
+                        Log.i(TAG, "[ Simulation Information Distance ] " + simul_info_distance);
+                        // if( current_distance % 100 == 0 ) changeRemainDistance(current_distance);
+
+
+                        // [ 목표지점 까지의 거리이다. ]
+                        // [ 10m이내 & 10-30m & 30-50m 사이의 값들이다. ]
+                        // [ 한번씩만 출력하기위해 flag값을 설정했다. ]
+                        if (simul_info_distance <= 50 && simul_info_distance > 30 && simul_check50)
+                            simul_check50 = false;
+                        else if (simul_info_distance <= 30 && simul_info_distance > 10 && simul_check30)
+                            simul_check30 = false;
+                        else if (simul_info_distance <= 10 && simul_check10)
+                            simul_check10 = false;
+
+                        // [ 다음 GPS 정보까지의 거리가 COORDINATES_DISTANCE보다 적을 때 ]
+                        if (simul_coordi_distance < COORDINATES_DISTANCE) {
                             Log.i(TAG, "============================== [ SImulation ] ==============================");
                             Log.i(TAG, "다음 Coordinates까지의 거리가 2m 이내입니다. ");
-                            Log.i(TAG, "[ 현재 Information index 값은 : " + info_index + " 입니다. ]");
-                            Log.i(TAG, "[ 현재 Information TurnType 값은 : " + info_list.get(info_index).getTurnType() + " 입니다. ]");
-                            Log.i(TAG, "[ Next Latitude & Longitude ] : " + next_latitude + " / " + next_longitude);
-                            Log.i(TAG, "[ Dest Latitude & Longitude ] : " + des_latitude + " / " + des_longitude);
 
-                            if (next_latitude == destination_latitude && next_longitude == destination_longitude) {
+                            // [ 방향 전환 경도 위도와 다음 GPS의 경도 위도가 같으면 방향 전환을 해야할 때이다. ]
+                            if (simul_next_latitude == simul_destination_latitude && simul_next_longitude == simul_destination_longitude) {
                                 Log.i(TAG, "[ 방향전환을 하겠습니다. ]");
-                                info_index++;
-                                coordinates_index++;
-                                direction_check = true; // [ 방향전환 후, 다음 next_latitude와 next_longitude를 구하기 위해서. ]
+                                simul_info_index++;             // [ 방향 전환을 위해 information index 추가 ]
+                                simul_coordinates_index++;      // [ 방향 전환과 동시에 GPS 값도 추가하여 다음 안내를 받는다. ]
+                                simul_direction_check = true;   // [ 방향전환 후, 다음 next_latitude와 next_longitude를 구하기 위해서. ]
                             } else {
                                 Log.i(TAG, "[ Coordinates List 값만 추가하겠습니다. ]");
-                                coordinates_index++;
+                                simul_coordinates_index++;      // [ 곡선을 위한 GPS값에 도달한 것이지, 방향 전환 값에 도달한 것이 아니기때문에, coordinates index만 추가한다. ]
                             }
-                            next_check = true;      // [ 현재의 위치가 다음 coordinates 와의 거리가 2m이내로, 그 다음 coordinates를 쫓으면 된다. ]
-                            break;
+                            simul_next_check = true;            // [ 현재의 위치가 다음 coordinates 와의 거리가 2m이내로, 그 다음 coordinates를 쫓으면 된다. ]
                         }   // [ if(distance < 5) ]
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }   // [ End try-catch ]
 
+                    // [ 그 다음 coordinates 값을 가져오기 위해 현재의 while문을 빠져나가야 한다. ]
+                    // if(simul_next_check) break;
+                }   // [ End Whlie ]
+            }   // [ End Run ]
+        };  // [ End Thread ]
+        thread.start();
 
-                        if (info_distance <= 50 && info_distance > 30 && check50) {
-                            Log.i(TAG, "============================== [ SImulation ] ==============================");
-                            Log.i(TAG, "목표지점 까지의 거리가 30-50m 사이입니다. ");
-                            check50 = false;    // [ 한번만 출력하기 위해서이다. ]
-                        } else if (info_distance <= 30 && info_distance > 10 && check30) {
-                            Log.i(TAG, "============================== [ SImulation ] ==============================");
-                            Log.i(TAG, "목표지점 까지의 거리가 10-30m 사이입니다. ");
-                            check30 = false;    // [ 한번만 출력하기 위해서이다. ]
-                        } else if (info_distance <= 10 && check10) {
-                            Log.i(TAG, "============================== [ SImulation ] ==============================");
-                            Log.i(TAG, "목표지점 까지의 거리가 10m 이내입니다. ");
-                            check10 = false;    // [ 한번만 출력하기 위해서이다. ]
-                        }
-                    }   // [ while(true) -- gap += lat & lon ]
-        }   // [ while(true) ]
     }   // [ End Simulation ]
 
     // [ 네비 정보 설정 ]
     public void setTextInfo(){
 
-        int total_distance = 1334;
+        total_distance = 1334;
         int total_time = 215;
         int turnType = 200;
         int distance = 0;
 
         String arrival_time = exception.strArrival_time(total_time);
-        String strRemain = exception.strRemainDistance(total_distance, total_distance);
+        strRemain = exception.strRemainDistance(total_distance, total_distance);
 
-        img_direction.setImageResource(R.drawable.direction_11);                       // 방향 이미지 ( 좌, 우, 유턴 )
+//        img_direction.setImageResource(R.drawable.direction_11);                       // 방향 이미지 ( 좌, 우, 유턴 )
         tv_distance = (TextView) findViewById(R.id.tv_distance);                            // 다음 안내지점까지의 거리
         tv_remain_distance.setText(strRemain);                // 총 남은 거리
         tv_arriaval_time.setText(arrival_time);                 // 도착 예상시간
     }   // [ End Set Text Info ]
 
-    // 길 안내 시작
-    public void getPathInfo(TMapPoint startPoint, TMapPoint endPoint) {
-        tmapview.removeAllMarkerItem();
+    // [ Direction 이미지 변경 ]
+    public void changeDirectionImg(int turnType){
+        Toast.makeText(getApplicationContext(),"[ 현재 Index & TurnTyep ] : " + simul_info_index + " / " + simul_turnType, Toast.LENGTH_LONG).show();
+        Log.i(TAG, "[ 방향전환이 이뤄졌습니다. TurnType은 : " + turnType + " 입니다. ] ");
+        if( turnType == 200 ) img_direction.setImageResource(R.drawable.direction_200);
+        else if( turnType == 201 ) img_direction.setImageResource(R.drawable.direction_201);
+        else if( turnType == 11 ) img_direction.setImageResource(R.drawable.direction_11);
+        else if( turnType == 12 ) img_direction.setImageResource(R.drawable.direction_12);
+        else if( turnType == 13 ) img_direction.setImageResource(R.drawable.direction_13);
+        else if( turnType == 14 ) img_direction.setImageResource(R.drawable.direction_14);
+    }   // [ End Direction 이미지 변경 ]
 
-        // 위도(Latitude) : 37 / 경도(Longitude) : 127
-        String startX = Double.toString(startPoint.getLongitude());
-        String startY = Double.toString(startPoint.getLatitude());
-        String endX = Double.toString(endPoint.getLongitude());
-        String endY = Double.toString(endPoint.getLatitude());
-        String reqCoordType = "WGS84GEO";
+    // [ 남은거리 변경 tv_remain_distance ]
+    public void changeRemainDistance(int current_distance){
+        int remain_distance = total_distance - current_distance;
+        strRemain = exception.strRemainDistance(total_distance, remain_distance);
+        tv_remain_distance.setText(strRemain);
+
+        Log.i(TAG, "[ 남은거리를 계산합니다. ] : " + strRemain);
+    }   // [ End Change Remain Distance ]
 
 
-        Log.i(TAG, "Start Point : " + startX + " / " + startY);
-        Log.i(TAG, "End Point : " + endX + " / " + endY);
+    private Handler handler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            // [ 다음 방향안내 지점까지의 남은 거리 ]
+            strCurrentDistance = exception.strDistance((int)simul_info_distance);
+            tv_distance.setText(strCurrentDistance);
 
-        Retrofit client = new Retrofit.Builder().baseUrl(ApiService.API_URL).addConverterFactory(GsonConverterFactory.create()).build();
-        ApiService apiService = client.create(ApiService.class);
-        Call<TmapDataVO> call = apiService.getGuidePath(endX, endY, reqCoordType, startX, startY);
-        call.enqueue(new Callback<TmapDataVO>() {
-            @Override
-            public void onResponse(Call<TmapDataVO> call, Response<TmapDataVO> response) {
-                if (response.isSuccessful()) {
-                    Log.i(TAG, "[ onResponse ] is Success");
-                    int length = response.body().getFeatures().size();
-                    for (int i = 0; i < length; i++) {
-                        Log.i(TAG, "==================== [ GuidActivity Car Path " + i + " ]====================");
+            // [ 방향 전환 ]
+            if(simul_direction_check) changeDirectionImg(simul_turnType);
+        }
+    };   // [ End Handler ]
 
-                        if (i == 0) {
-                            String strDistance = exception.strDistance(response.body().getFeatures().get(i).getProperties().getTotalDistance());
-                            tv_distance.setText(strDistance);
-
-                            Log.i(TAG, "[ Properties ] Total Distance : " + response.body().getFeatures().get(i).getProperties().getTotalDistance());
-                            Log.i(TAG, "[ Properties ] Total Time : " + response.body().getFeatures().get(i).getProperties().getTotalTime());
-                            Log.i(TAG, "[ Properties ] Total Fare : " + response.body().getFeatures().get(i).getProperties().getTotalFare());
-                            Log.i(TAG, "[ Properties ] Total TaxiFare : " + response.body().getFeatures().get(i).getProperties().getTaxiFare());
-                            Log.i(TAG, "[ Properties ] Distance : " + response.body().getFeatures().get(i).getProperties().getDistance());
-                            Log.i(TAG, "[ Properties ] Description : " + response.body().getFeatures().get(i).getProperties().getDescription());
-                            Log.i(TAG, "[ Properties ] TurnType : " + response.body().getFeatures().get(i).getProperties().getTurnType());
-                            Log.i(TAG, "[ Properties ] Index : " + response.body().getFeatures().get(i).getProperties().getIndex());
-
-                        } else {
-                            Log.i(TAG, "[ Properties ] Distance : " + response.body().getFeatures().get(i).getProperties().getDistance());
-                            Log.i(TAG, "[ Properties ] Description : " + response.body().getFeatures().get(i).getProperties().getDescription());
-                            Log.i(TAG, "[ Properties ] TurnType : " + response.body().getFeatures().get(i).getProperties().getTurnType());
-                            Log.i(TAG, "[ Properties ] Index : " + response.body().getFeatures().get(i).getProperties().getIndex());
-
-                        }   // if
-                    }   // for
-                }   // if(response.isSuccessful())
-            }   // onResponse
-
-            @Override
-            public void onFailure(Call<TmapDataVO> call, Throwable t) {
-
-            }
-        }); // call.enqueue
-    }   // getPathInfo
+    public void destination(){
+        Toast.makeText(getApplicationContext(), "도착지 부근입니다. 모의주행을 종료합니다.", Toast.LENGTH_LONG).show();
+    }   // [ End destination ]
 }

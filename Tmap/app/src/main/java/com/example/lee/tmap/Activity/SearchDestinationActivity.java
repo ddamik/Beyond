@@ -200,8 +200,26 @@ public class SearchDestinationActivity extends Activity implements TMapGpsManage
         btn_searchDest.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                selectDestination("");
-            }
+                String search = edit_destination.getText().toString();
+                selectDestination(search);
+                                         /*
+                            UI 변환
+                         */
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                autoCheck = true;
+                                adapter.notifyDataSetChanged();
+                                // 해당 작업을 처리함
+                            }
+                        });
+                    }
+                }).start();
+
+            }   // [ End onClick ]
         });
 
         // 경로안내 지도보기
@@ -209,7 +227,7 @@ public class SearchDestinationActivity extends Activity implements TMapGpsManage
         btn_viewmap.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Intent navigation =
+                tMapGpsManager.CloseGps();
                 startActivity(new Intent(SearchDestinationActivity.this, PathInfoActivity.class));
                 overridePendingTransition(R.anim.anim_slide_fade_in, R.anim.anim_slide_out_left);
             }
@@ -220,6 +238,7 @@ public class SearchDestinationActivity extends Activity implements TMapGpsManage
         btn_back.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                tMapGpsManager.CloseGps();
                 startActivity(new Intent(SearchDestinationActivity.this, MainActivity.class));                     // 우측으로 사라지기
                 overridePendingTransition(R.anim.anim_slide_in_left, R.anim.anim_slide_out_right);
                 finish();
@@ -299,8 +318,7 @@ public class SearchDestinationActivity extends Activity implements TMapGpsManage
                     UserException.STATIC_CURRENT_GPS_CHECK = true;
                     if(UserException.STATIC_CURRENT_GPS_CHECK){
                         Intent intent = new Intent(SearchDestinationActivity.this, PathInfoActivity.class);
-                        // ArrivalDataVO arrivalDataVO = new ArrivalDataVO(arrival_name, arrival_longitude, arrival_latitude);
-                        // intent.putExtra("arrivalDataVO", arrivalDataVO);
+                        tMapGpsManager.CloseGps();
                         startActivity(intent);
                         overridePendingTransition(R.anim.anim_slide_fade_in, R.anim.anim_slide_out_left);
 //                        Toast.makeText(getApplicationContext(), "페이지 전환", Toast.LENGTH_LONG).show();

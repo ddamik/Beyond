@@ -124,6 +124,7 @@ public class MainActivity extends Activity implements TMapGpsManager.onLocationC
                 // wifi 또는 모바일 네트워크 하나라도 연결이 되어있다면,
                 if (wifi.isConnected() || mobile.isConnected()) {
                     Log.i(TAG, "[ 인터넷 연결이 완료됨. ] ");
+                    tMapGpsManager.CloseGps();
                     startActivity(new Intent(MainActivity.this, SearchDestinationActivity.class));                     // 좌측으로 사라지기
                     overridePendingTransition(R.anim.anim_slide_in_right, R.anim.anim_slide_out_left);      // 새로운 Activity Animation / 현재의 Activity Animation
                 } else {
