@@ -265,4 +265,34 @@ public class GuideActivity extends Activity implements TMapGpsManager.onLocation
             }
         }); // call.enqueue
     }   // getPathInfo
+
+    //
+    @Override
+    protected void onStart() {
+        super.onStart();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        gps.OpenGps();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // GPS중단
+        gps.CloseGps();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Thread 종료
+    }
 }   // class

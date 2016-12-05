@@ -15,6 +15,7 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import com.example.lee.tmap.Adapter.ListViewAdapter;
+import com.example.lee.tmap.ApiService;
 import com.example.lee.tmap.POIItem;
 import com.example.lee.tmap.R;
 import com.example.lee.tmap.UserException;
@@ -30,6 +31,13 @@ import java.util.ArrayList;
 import android.app.Activity;
 import android.widget.ListView;
 import android.widget.Toast;
+
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.GsonConverterFactory;
+import retrofit2.Response;
+import retrofit2.Retrofit;
 
 public class SearchDestinationActivity extends Activity implements TMapGpsManager.onLocationChangedCallback{
 
@@ -222,23 +230,25 @@ public class SearchDestinationActivity extends Activity implements TMapGpsManage
             }   // [ End onClick ]
         });
 
-        // 경로안내 지도보기
-        btn_viewmap = (Button) findViewById(R.id.btn_viewmap);
-        btn_viewmap.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                tMapGpsManager.CloseGps();
-                startActivity(new Intent(SearchDestinationActivity.this, PathInfoActivity.class));
-                overridePendingTransition(R.anim.anim_slide_fade_in, R.anim.anim_slide_out_left);
-            }
-        });
+//        // 경로안내 지도보기
+//        btn_viewmap = (Button) findViewById(R.id.btn_viewmap);
+//        btn_viewmap.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                Intent intent = new Intent(SearchDestinationActivity.this, PathInfoActivity.class);
+//                intent.putExtra("des_longitude", des_longitude);
+//                intent.putExtra("des_latitude", des_latitude);
+//                intent.putExtra("arrival_name", des_name);
+//                startActivity(intent);
+//                overridePendingTransition(R.anim.anim_slide_fade_in, R.anim.anim_slide_out_left);
+//            }
+//        });
 
         // 뒤로가기 버튼
         btn_back = (Button) findViewById(R.id.btn_back);
         btn_back.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                tMapGpsManager.CloseGps();
                 startActivity(new Intent(SearchDestinationActivity.this, MainActivity.class));                     // 우측으로 사라지기
                 overridePendingTransition(R.anim.anim_slide_in_left, R.anim.anim_slide_out_right);
                 finish();
@@ -318,10 +328,11 @@ public class SearchDestinationActivity extends Activity implements TMapGpsManage
                     UserException.STATIC_CURRENT_GPS_CHECK = true;
                     if(UserException.STATIC_CURRENT_GPS_CHECK){
                         Intent intent = new Intent(SearchDestinationActivity.this, PathInfoActivity.class);
-                        tMapGpsManager.CloseGps();
+                        intent.putExtra("des_longitude", des_longitude);
+                        intent.putExtra("des_latitude", des_latitude);
+                        intent.putExtra("arrival_name", des_name);
                         startActivity(intent);
                         overridePendingTransition(R.anim.anim_slide_fade_in, R.anim.anim_slide_out_left);
-//                        Toast.makeText(getApplicationContext(), "페이지 전환", Toast.LENGTH_LONG).show();
                     }else{
                         Toast.makeText(getApplicationContext(), "GPS를 활성화 해주세요.", Toast.LENGTH_LONG).show();
                     }
@@ -341,12 +352,35 @@ public class SearchDestinationActivity extends Activity implements TMapGpsManage
 
     public void onDestinationClick(String arrival_name, double arrival_longitude, double arrival_latitude ){
 
-        Log.i(TAG, "[ On Destination Click ] ");
-        ProgressAsync progressAsync = new ProgressAsync();
-        progressAsync.execute();
-        Log.i(TAG, "[ After Execute ]");
+        long searchDate = System.currentTimeMillis();
+        String userUUID = "AAF3:0000:0000:0000";
+        String arrivalName = arrival_name;
+        String strSearchDate = String.valueOf(searchDate);
+        String strArrivalLongitude = String.valueOf(arrival_longitude);
+        String strArrivalLatitude = String.valueOf(arrival_latitude);
 
+        // [ DB 저장 ]
+        Retrofit client = new Retrofit.Builder().baseUrl(ApiService.SERVER_URL).addConverterFactory(GsonConverterFactory.create()).build();
+        ApiService apiService = client.create(ApiService.class);
+        Call<ResponseBody> call = apiService.saveRoute(userUUID, arrivalName, strSearchDate, strArrivalLongitude, strArrivalLatitude);
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                Log.i(TAG, "[ Retrofit Save Route Status ]: " + response.code());
+                if (response.isSuccessful()) {
+                    Log.i(TAG, response.body().toString());
+                    Log.i(TAG, "[ On Destination Click ] ");
+                    ProgressAsync progressAsync = new ProgressAsync();
+                    progressAsync.execute();
+                    Log.i(TAG, "[ After Execute ]");
+                }
+            }
 
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+
+            }
+        }); // [ End Retrofit( Save Route ) ]
     }   // onDestinationClick
 
     @Override
@@ -357,4 +391,33 @@ public class SearchDestinationActivity extends Activity implements TMapGpsManage
 
         Log.i(TAG, "[ SearchDestinationActivity On Location Change ]");
     }   // onLocationChange
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // GPS중단
+        tMapGpsManager.CloseGps();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Thread 종료
+        mHandler.removeMessages(0);
+    }
 }

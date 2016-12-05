@@ -12,6 +12,7 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.lee.tmap.ApiService;
 import com.example.lee.tmap.R;
@@ -67,7 +68,8 @@ public class PathInfoActivity extends Activity {
         Path
      */
     TMapData tMapData;
-
+    public String strSearchDestination = "SearchDestinationActivity";
+    public String strMain = "MainActivity";
 
     /*
         경로안내
@@ -93,10 +95,20 @@ public class PathInfoActivity extends Activity {
      */
     public UserException exception;
 
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_path_info);
+
+        // 어느 Activity에서 경로를 요청했는지 구분
+        Intent intent = getIntent();
+        String tmpArrival_name = intent.getStringExtra("arrival_name");
+        double tmpLongitude = intent.getDoubleExtra("des_longitude", 0.0);
+        double tmpLatitude = intent.getDoubleExtra("des_latitude", 0.0);
+
+        Log.i(TAG, "[ Arriva_name & longitude & latitude ]: " + tmpArrival_name + " & " + tmpLongitude + " & " + tmpLatitude);
 
         // User Exception ( [ 도착시간 & 소요시간 & 통행요금 & 거리 스트링 변환 ] )
         exception = new UserException();
@@ -115,7 +127,7 @@ public class PathInfoActivity extends Activity {
 
         pathInfo = new ArrayList<TmapDataVO>();
         tMapData = new TMapData();
-        initLocation();                 // 시작할때의 현재위치를 가져온다. TMap은 Point 기준이기때문에 위도와 경도를 Point로 셋팅.
+        initLocation(tmpArrival_name, tmpLongitude, tmpLatitude);                 // 시작할때의 현재위치를 가져온다. TMap은 Point 기준이기때문에 위도와 경도를 Point로 셋팅.
         initMapView();                  // 지도 초기화
         initPathInfo(startPoint);
 
@@ -139,8 +151,8 @@ public class PathInfoActivity extends Activity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(PathInfoActivity.this, GuideActivity.class);
-                intent.putExtra("pathInfo", pathInfo);
                 startActivity(intent);
+                finish();
             }
         });
 
@@ -154,6 +166,7 @@ public class PathInfoActivity extends Activity {
             public void onClick(View v) {
                 Intent intent = new Intent(PathInfoActivity.this, SimulationActivity.class);
                 startActivity(intent);
+                finish();
             }
         });
    }   //onCreate
@@ -184,11 +197,11 @@ public class PathInfoActivity extends Activity {
 
 
     // 시작할때 현재 위치를 가져옴. [ GPS가 잡는 속도가 느려서 Search할때 현재의 위도와 경도를 얻고, 그 값을 가져온다. ]
-    public void initLocation() {
+    public void initLocation(String tmpArrival_name, double tmpLongitude, double tmpLatitude) {
 
-        des_longitude = SearchDestinationActivity.des_longitude;
-        des_latitude = SearchDestinationActivity.des_latitude;
-        arrival_name = SearchDestinationActivity.des_name;
+        des_longitude = tmpLongitude;
+        des_latitude = tmpLatitude;
+        arrival_name = tmpArrival_name;
 
         current_latitude = UserException.STATIC_CURRENT_LATITUDE;
         current_longitude = UserException.STATIC_CURRENT_LONGITUDE;
@@ -213,6 +226,7 @@ public class PathInfoActivity extends Activity {
         Log.i(TAG, "[ initPathInfo StartPoint Latitude ] : " + lat);
         Log.i(TAG, "[ initPathInfo StartPoint Longitude ] : " + lon);
 
+        // [ ReverseGeocoding ]
         Retrofit client = new Retrofit.Builder().baseUrl(ApiService.API_URL).addConverterFactory(GsonConverterFactory.create()).build();
         ApiService apiService = client.create(ApiService.class);
         Call<ReverseGeocodingVO> call = apiService.getAddress(lat, lon, coordType, addressType);
@@ -346,4 +360,31 @@ public class PathInfoActivity extends Activity {
         tmapview.addMarkerItem("도착", des_marker);
 
     }   // initDestinationMarker
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // GPS중단
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Thread 종료
+    }
 }   // class

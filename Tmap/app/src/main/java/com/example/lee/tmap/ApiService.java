@@ -4,6 +4,7 @@ import com.example.lee.tmap.ValueObject.RecentPathVO;
 import com.example.lee.tmap.ValueObject.ReverseGeocodingVO;
 import com.example.lee.tmap.ValueObject.TmapDataVO;
 
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.http.Field;
 import retrofit2.http.FormUrlEncoded;
@@ -50,13 +51,27 @@ public interface ApiService {
 
     /*==========
         [ Server Database ]
-        1. 즐겨찾기 [ /routerecord/ ]
+        [ 1. 최근 검색어 가져오기. ]
+        [ 2. 최근 검색어 저장 ]
     ========== */
+
+    // [ 1. 최근 검색어 가져오기. ]
     @Headers({
         "Accept: application/json",
     })
     @GET("/routerecord/")
     Call<RecentPathVO> getRecentPath(
         // @Query("USER_UUID") String USER_UUID
+    );
+
+    // [ 2. 최근 검색어 저장. ]
+    @FormUrlEncoded
+    @POST("/routerecord/saveroute")
+    Call<ResponseBody> saveRoute(
+            @Field("userUUID") String userUUID,
+            @Field("arrivalName") String arrivalName,
+            @Field("searchDate") String searchDate,
+            @Field("latitudeValue") String latitudeValue,
+            @Field("longitudeValue") String longitudeValue
     );
 }

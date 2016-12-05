@@ -534,10 +534,8 @@ public class SimulationActivity extends Activity {
             @Override
             public void run() {
                 while (threadFlag) {
-                    Log.i(TAG, "[ Thread.sleep(100) ] ");
-                    Log.i(TAG, "[ Current Information index & turnTyep ] : " + simul_info_index + " / " + info_list.get(simul_info_index).getTurnType());
                     try {
-                        Thread.sleep(500);
+                        Thread.sleep(100);
                         // [ turnType == 0 인 경우는 목표지점까지의 거리정보뿐이기때문에 얻을 정보가 없다. 따라서, index를 추가하고 continue; ]
                         if (info_list.get(simul_info_index).getTurnType() == 0){
                             simul_info_index++;
@@ -590,7 +588,6 @@ public class SimulationActivity extends Activity {
                             // [ 10m 이내라서 다음 목표지점을 찾아야 한다. Coordinates 값이 아닌 Information 값 ]
                             simul_destination_latitude = info_list.get(simul_info_index).getLatitude();
                             simul_destination_longitude = info_list.get(simul_info_index).getLongitude();
-                            Log.i(TAG, "[ Information TurnType / Information_index ] : " + info_list.get(simul_info_index).getTurnType() + " / " + simul_info_index);
 
                             simul_direction_check = false;            // [ 계속해서 다음 방향을 알기위한 지점의 위도 경도값과 turnType을 알 필요가 없기 때문이다. ]
                             simul_check10 = true;
@@ -628,9 +625,6 @@ public class SimulationActivity extends Activity {
                         // [ 총 남은거리를 1m씩 줄여야 한다. ]
                         // [ 이동거리를 누적하여 100m단위로 0.1km 씩 감소시킨다. ]
                         current_distance++;
-                        Log.i(TAG, "[ Simulation Information Distance ] " + simul_info_distance);
-                        // if( current_distance % 100 == 0 ) changeRemainDistance(current_distance);
-
 
                         // [ 목표지점 까지의 거리이다. ]
                         // [ 10m이내 & 10-30m & 30-50m 사이의 값들이다. ]
@@ -649,17 +643,13 @@ public class SimulationActivity extends Activity {
 
                             // [ 방향 전환 경도 위도와 다음 GPS의 경도 위도가 같으면 방향 전환을 해야할 때이다. ]
                             if (simul_next_latitude == simul_destination_latitude && simul_next_longitude == simul_destination_longitude) {
-
                                 simul_info_index++;             // [ 방향 전환을 위해 information index 추가 ]
                                 simul_coordinates_index++;      // [ 방향 전환과 동시에 GPS 값도 추가하여 다음 안내를 받는다. ]
                                 simul_direction_check = true;   // [ 방향전환 후, 다음 next_latitude와 next_longitude를 구하기 위해서. ]
 
-                                Log.i(TAG, "[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[ Change simul_direction_check ]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]");
                                 // [ turnType 바탕으로 img_direction 값 설정 ]
                                 // [ simul_info_index 값이 추가되고 나서 방향이미지를 변경해줘야 한다. ]Log.i()
-                                simul_turnType = info_list.get(simul_info_index).getTurnType();
                             } else {
-                                Log.i(TAG, "[ Coordinates List 값만 추가하겠습니다. ]");
                                 simul_coordinates_index++;      // [ 곡선을 위한 GPS값에 도달한 것이지, 방향 전환 값에 도달한 것이 아니기때문에, coordinates index만 추가한다. ]
                             }
                             simul_next_check = true;            // [ 현재의 위치가 다음 coordinates 와의 거리가 2m이내로, 그 다음 coordinates를 쫓으면 된다. ]
@@ -753,7 +743,32 @@ public class SimulationActivity extends Activity {
         }
     };   // [ End directionHandler ]
 
-    public void destination(){
-        Toast.makeText(getApplicationContext(), "도착지 부근입니다. 모의주행을 종료합니다.", Toast.LENGTH_LONG).show();
-    }   // [ End destination ]
+    @Override
+    protected void onStart() {
+        super.onStart();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // GPS중단
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Thread 종료
+        thread.interrupt();
+        threadFlag = false;
+    }
 }

@@ -13,14 +13,24 @@ public class RecentPathVO {
     public ArrayList<RESULT> getResult() { return result; }
 
     public class RESULT{
-        @SerializedName("USER_UUID") public String USER_UUID;
-        @SerializedName("ARRIVAL_NAME") public String ARRIVAL_NAME;
-        @SerializedName("IS_FAVORITE") public String IS_FAVORITE;
-        @SerializedName("SEARCH_DATE") public String SEARCH_DATE;
+        @SerializedName("USER_UUID") public String userUUID;
+        @SerializedName("ARRIVAL_NAME") public String arrivalName;
+        @SerializedName("SEARCH_DATE") public String searchDate;
+        @SerializedName("LATITUDE_VALUE") public String latitudeValue;
+        @SerializedName("LONGITUDE_VALUE") public String longitudeValue;
 
-        public String getUSER_UUID() { return USER_UUID; }
-        public String getARRIVAL_NAME() { return ARRIVAL_NAME; }
-        public String getIS_FAVORITE() { return IS_FAVORITE; }
-        public String getSEARCH_DATE() { return SEARCH_DATE; }
+        public RESULT() { }
+
+        public RESULT(String arrivalName, String longitudeValue, String latitudeValue) {
+            this.arrivalName = arrivalName;
+            this.longitudeValue = longitudeValue;
+            this.latitudeValue = latitudeValue;
+        }
+
+        public String getArrivalName() { return arrivalName; }
+        public String getLatitudeValue() { return latitudeValue; }
+        public String getLongitudeValue() { return longitudeValue; }
+        public String getSearchDate() { return searchDate; }
+        public String getUserUUID() { return userUUID; }
     }   // RESULT
 }

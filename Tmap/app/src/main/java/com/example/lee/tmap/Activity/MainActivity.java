@@ -1,12 +1,14 @@
 package com.example.lee.tmap.Activity;
 
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.app.Activity;
 import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -21,6 +23,7 @@ import com.example.lee.tmap.Adapter.GridViewAdapter;
 import com.example.lee.tmap.ApiService;
 import com.example.lee.tmap.R;
 import com.example.lee.tmap.UserException;
+import com.example.lee.tmap.ValueObject.RecentPathListVO;
 import com.example.lee.tmap.ValueObject.RecentPathVO;
 import com.skp.Tmap.TMapGpsManager;
 
@@ -32,6 +35,8 @@ import retrofit2.Callback;
 import retrofit2.GsonConverterFactory;
 import retrofit2.Response;
 import retrofit2.Retrofit;
+
+import static com.example.lee.tmap.ValueObject.RecentPathVO.*;
 
 
 public class MainActivity extends Activity implements TMapGpsManager.onLocationChangedCallback {
@@ -54,9 +59,11 @@ public class MainActivity extends Activity implements TMapGpsManager.onLocationC
 //    private GridAdapter gridAdapter;
     private TextView tv_destination;
     private GridView gridView;
-    private ArrayList<String>  destination_list;
+    private ArrayList<RecentPathListVO> destinationList;
     String[] recentPathList;
-
+    private double destination_longitude = 0.0;
+    private double destination_latitude = 0.0;
+    private String strArrivalName = "";
 
 
     @Override
@@ -66,22 +73,52 @@ public class MainActivity extends Activity implements TMapGpsManager.onLocationC
 
         // UUID & Recent Path List
         String strUUID = this.GetDevicesUUID(this);
+        Log.i(TAG, "[ String UUID ] : " + strUUID);
         recentPathList = new String[9];
+        destinationList = new ArrayList<>();
 
+        initRecentPath();
+        initInternetAndButton();
+
+        /*
+            GPS
+         */
+        tMapGpsManager = new TMapGpsManager(this);
+        tMapGpsManager.setProvider(TMapGpsManager.NETWORK_PROVIDER);
+        tMapGpsManager.OpenGps();
+
+    }   // onCreate
+
+    public void initRecentPath(){
+        // [ 최근에 검색한 경로 9개 ]
         Retrofit client = new Retrofit.Builder().baseUrl(ApiService.SERVER_URL).addConverterFactory(GsonConverterFactory.create()).build();
         ApiService apiService = client.create(ApiService.class);
-        // Call<RecentPathVO> call = apiService.getRecentPath(strUUID);
         Call<RecentPathVO> call = apiService.getRecentPath();
         call.enqueue(new Callback<RecentPathVO>() {
             @Override
             public void onResponse(Call<RecentPathVO> call, Response<RecentPathVO> response) {
                 if(response.isSuccessful()) {
-                    Log.i(TAG, "[ On Response ] ");
+                    RecentPathListVO vo;
+                    String arrivalName = "";
+                    String strLatitude = "";
+                    String strLongitude = "";
+                    double longitudeValue = 0.0;
+                    double latitudeValue = 0.0;
+
                     int length = response.body().getResult().size();
                     for(int i=0; i<length ; i++){
+                        arrivalName = response.body().getResult().get(i).getArrivalName();
+                        strLongitude = response.body().getResult().get(i).getLatitudeValue();
+                        Log.i(TAG, "[ Longitude ] = " + strLongitude);
+                        longitudeValue = Double.parseDouble(strLongitude);
+                        strLatitude = response.body().getResult().get(i).getLongitudeValue();
+                        Log.i(TAG, "[ Latitude ] = " + strLatitude);
+                        latitudeValue = Double.parseDouble(strLatitude);
 
-                        recentPathList[i] = String.valueOf(response.body().getResult().get(i).getARRIVAL_NAME());
-                        Log.i(TAG, "[ Response Body Arrival Name ]["+i+"] & RecentPath : " + response.body().getResult().get(i).getARRIVAL_NAME() + " / " + recentPathList[i]);
+
+                        recentPathList[i] = arrivalName;
+                        vo = new RecentPathListVO(arrivalName, latitudeValue, longitudeValue);
+                        destinationList.add(vo);
                     }   // for
 
                     /*==========
@@ -92,7 +129,7 @@ public class MainActivity extends Activity implements TMapGpsManager.onLocationC
                     gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                         @Override
                         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                            Toast.makeText(getApplicationContext(), recentPathList[position], Toast.LENGTH_LONG).show();
+                            recentPathClicked(recentPathList[position]);
                         }
                     });
                 }   // respsone.isSuccessful
@@ -105,13 +142,14 @@ public class MainActivity extends Activity implements TMapGpsManager.onLocationC
                 Log.i(TAG, "[ RecentPathVO Call ] : " + call);
             }
         });
+    }
 
+    public void initInternetAndButton(){
 
         // 인터넷 연결 체크
         ConnectivityManager manager = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
         final NetworkInfo mobile = manager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
         final NetworkInfo wifi = manager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-
 
         /*
             Search
@@ -133,16 +171,8 @@ public class MainActivity extends Activity implements TMapGpsManager.onLocationC
                 }
             }
         }); // btn_searchDest
+    }   // [ End InitInternetAndButton ]
 
-        /*
-            GPS
-         */
-        tMapGpsManager = new TMapGpsManager(this);
-        tMapGpsManager.setProvider(TMapGpsManager.NETWORK_PROVIDER);
-        tMapGpsManager.OpenGps();
-
-
-    }   // onCreate
 
     @Override
     public void onLocationChange(Location location) {
@@ -156,7 +186,6 @@ public class MainActivity extends Activity implements TMapGpsManager.onLocationC
         Log.i(TAG, "onLocationChange" + cur_longitude + " / " + cur_latitude);
     }   // onLocationChange
 
-
     // UUID
     private String GetDevicesUUID(Context mContext){
         final TelephonyManager tm = (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
@@ -169,4 +198,100 @@ public class MainActivity extends Activity implements TMapGpsManager.onLocationC
         return deviceId;
     }
 
+    // [ 최근 경로를 클릭했을 경우, PathInfoActivitiy로 전환 ]
+    public void recentPathClicked(String arrival_name){
+
+        strArrivalName = arrival_name;
+        for(int i=0; i<destinationList.size(); i++){
+            if(strArrivalName.equals(destinationList.get(i).getArrivalName())){
+                destination_longitude = destinationList.get(i).getLongitudeValue();
+                destination_latitude = destinationList.get(i).getLatitudeValue();
+                break;
+            }
+        }
+
+        ProgressAsync progressAsync = new ProgressAsync();
+        progressAsync.execute();
+    }   // [ End recentPathClicked ]
+
+    private class ProgressAsync extends AsyncTask<Void, Void, Void> {
+
+        ProgressDialog progressDialog = new ProgressDialog(MainActivity.this);
+
+        @Override
+        protected void onPreExecute() {
+            Log.i(TAG, "[ On Pre Execute ]");
+            progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            progressDialog.setMessage("로딩중입니다.");
+            progressDialog.show();
+            super.onPreExecute();
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            Log.i(TAG, "[ Do In Background ] ");
+            while(true){
+                if( UserException.STATIC_CURRENT_LONGITUDE == 0 || UserException.STATIC_CURRENT_LATITUDE == 0 ) {
+                    continue;
+                }
+                else {
+                    UserException.STATIC_CURRENT_GPS_CHECK = true;
+                    if(UserException.STATIC_CURRENT_GPS_CHECK){
+                        Log.i(TAG, "[ ArrivalName ]: " + strArrivalName);
+                        Log.i(TAG, "[ Destination Longitude ]: " + destination_longitude);
+                        Log.i(TAG, "[ Destination Latitude ]: " + destination_latitude);
+
+                        Intent intent = new Intent(MainActivity.this, PathInfoActivity.class);
+                        intent.putExtra("arrival_name", strArrivalName);
+                        intent.putExtra("des_longitude", destination_longitude);
+                        intent.putExtra("des_latitude", destination_latitude);
+                        startActivity(intent);
+                        overridePendingTransition(R.anim.anim_slide_fade_in, R.anim.anim_slide_out_left);
+                    }else{
+                        Toast.makeText(getApplicationContext(), "GPS를 활성화 해주세요.", Toast.LENGTH_LONG).show();
+                    }
+                    break;
+                }
+            }
+            return null;
+        }   // doInBackground
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            Log.i(TAG, "[ On Post Execute ] ");
+            progressDialog.dismiss();
+            super.onPostExecute(aVoid);
+        }   // onPostExecute
+    }   // ProgressAsync
+
+    //
+    @Override
+    protected void onStart() {
+        super.onStart();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        initRecentPath();
+        initInternetAndButton();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // GPS중단
+        tMapGpsManager.CloseGps();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Thread 종료
+    }
 }
