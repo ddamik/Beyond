@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:background="#00ff0000"
+    android:orientation="vertical"
+    android:weightSum="10">
+
+    <!-- [ Top ] -->
+    <LinearLayout
+        android:background="@color/font_white"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1.5"
+        android:weightSum="10"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/img_direction"
+            android:src="@drawable/direction_13"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="2.5"/>
+
+        <TextView
+            android:id="@+id/tv_distance"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="1.4km"
+            android:textColor="@color/tmap_font_color"
+            android:textSize="36dp"
+            android:textStyle="bold"
+            android:layout_weight="5"/>
+
+        <ImageView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"/>
+
+    </LinearLayout>
+    <!-- [ End Top ] -->
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="7.5"
+        android:weightSum="10"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="9.5"/>
+
+        <ImageButton
+            android:id="@+id/img_btn_currentPoint"
+            android:src="@drawable/current_blue"
+            android:background="@android:color/transparent"
+            android:layout_margin="@dimen/activity_vertical_margin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.5"/>
+    </LinearLayout>
+    <!-- 전방 몇m & 남은거리 & 예상도착 시간 & 현재속도 & 전체 바탕색 변경 & 현재 위치 -->
+
+    <!-- [ Bottom ] -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:weightSum="10"
+        android:orientation="horizontal"
+        android:background="#ffffff">
+
+        <TextView
+            android:id="@+id/tv_remain_distance"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:textColor="@color/tmap_font_color"
+            android:textSize="24dp"
+            android:textStyle="bold"
+            android:text="142m"
+            android:gravity="center"
+            android:layout_weight="3"/>
+
+        <TextView
+            android:id="@+id/tv_arrival_time"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="4.5"
+            android:textColor="@color/tmap_font_color"
+            android:textSize="18dp"
+            android:textStyle="bold"
+            android:text="14:05 도착예정"
+            android:gravity="center"/>
+
+        <ImageButton
+            android:layout_gravity="center"
+            android:id="@+id/img_btn_exit"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:background="@android:color/transparent"
+            android:layout_weight="2.5"
+            android:src="@drawable/btn_exit"/>
+    </LinearLayout>
+    <!-- [ End Bottom ] -->
+</LinearLayout>

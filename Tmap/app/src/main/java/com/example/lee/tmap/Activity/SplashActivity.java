@@ -1,26 +1,29 @@
 package com.example.lee.tmap.Activity;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
-import android.support.v7.app.AppCompatActivity;
+
+
 
 import com.example.lee.tmap.R;
 
-public class SplashActivity extends AppCompatActivity {
+public class SplashActivity extends Activity {
 
-    public static int SPLASH_LENGTH = 3000;
+    public static final int SPLASH_LENGTH = 2000;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_splash);
 
-        Handler handler = new Handler(){
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
             @Override
-            public void handleMessage(Message msg){
+            public void run() {
+                startActivity(new Intent(SplashActivity.this, MainActivity.class));
                 finish();
             }
-        };
-        handler.sendEmptyMessageDelayed(0, SPLASH_LENGTH);
+        }, SPLASH_LENGTH);
     }   // onCreate
 }

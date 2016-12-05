@@ -6,40 +6,56 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:weightSum="10">
 
-        <TextView
-            android:id="@+id/tv_name"
-            android:textSize="18dp"
-            android:textColor="#000000"
-            android:typeface= "sans"
-            android:gravity="center_vertical"
+        <LinearLayout
             android:layout_width="0dp"
-            android:layout_weight="8"
-            android:layout_height="wrap_content" />
+            android:layout_height="match_parent"
+            android:layout_weight="7"
+            android:weightSum="10"
+            android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tv_distance"
-            android:textSize="18dp"
-            android:textColor="#FF0000"
-            android:typeface= "sans"
-            android:textStyle="bold"
-            android:gravity="center_vertical"
-            android:layout_gravity="right"
+            <!-- POI 명칭 [ ex 교문금호어울림아파트 ] -->
+            <TextView
+                android:id="@+id/tv_name"
+                android:textSize="18dp"
+                android:textColor="#000000"
+                android:typeface= "sans"
+                android:gravity="center_vertical"
+                android:layout_width="match_parent"
+                android:layout_weight="5.5"
+                android:layout_height="0dp" />
+
+            <!-- POI 주소 [ ex 경기 구리시 교문동 ] -->
+            <TextView
+                android:id="@+id/tv_address"
+                android:textSize="12dp"
+                android:typeface= "sans"
+                android:textColor="#666666"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="4.5"/>
+        </LinearLayout>
+
+
+        <LinearLayout
             android:layout_width="0dp"
-            android:layout_weight="2"
-            android:layout_height="wrap_content" />
+            android:layout_height="match_parent"
+            android:layout_weight="3">
 
+            <TextView
+                android:id="@+id/tv_distance"
+                android:textSize="18dp"
+                android:textColor="#FF0000"
+                android:typeface= "sans"
+                android:textStyle="bold"
+                android:gravity="center_vertical"
+                android:layout_gravity="right"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        </LinearLayout>
     </LinearLayout>
-
-
-    <TextView
-        android:id="@+id/tv_address"
-        android:textSize="12dp"
-        android:typeface= "sans"
-        android:textColor="#666666"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
+    <!-- [ End Horizontal ] -->
 </LinearLayout>
