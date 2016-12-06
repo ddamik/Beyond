@@ -4,68 +4,57 @@ package com.example.lee.tmap.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.app.Activity;
 import android.location.Location;
+
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
+
 import android.os.Bundle;
+import android.support.design.widget.NavigationView;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.Button;
 import android.widget.GridView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.lee.tmap.Adapter.GridViewAdapter;
 import com.example.lee.tmap.ApiService;
+import com.example.lee.tmap.Fragment.HomeFragment;
 import com.example.lee.tmap.R;
 import com.example.lee.tmap.UserException;
 import com.example.lee.tmap.ValueObject.RecentPathListVO;
 import com.example.lee.tmap.ValueObject.RecentPathVO;
+
 import com.skp.Tmap.TMapGpsManager;
 
 import java.util.ArrayList;
 import java.util.UUID;
 
-import okhttp3.ResponseBody;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.GsonConverterFactory;
-import retrofit2.Response;
-import retrofit2.Retrofit;
+public class MainActivity extends AppCompatActivity implements TMapGpsManager.onLocationChangedCallback {
 
-import static com.example.lee.tmap.ValueObject.RecentPathVO.*;
-
-
-public class MainActivity extends Activity implements TMapGpsManager.onLocationChangedCallback {
-
-    public static final String TAG = "MainActivity";
+    public static final String TAG = MainActivity.class.getSimpleName();
 
     public static double cur_longitude = 0.0;
     public static double cur_latitude = 0.0;
-    private TMapGpsManager tMapGpsManager;
 
-    /*
-        검색
-     */
-    Button btn_searchDest = null;
+    private Toolbar toolbar;
 
+    private NavigationView navigationView;
 
-    /*
-        GridView
-     */
-//    private GridAdapter gridAdapter;
-    private TextView tv_destination;
-    private GridView gridView;
-    private ArrayList<RecentPathListVO> destinationList;
-    String[] recentPathList;
-    private double destination_longitude = 0.0;
-    private double destination_latitude = 0.0;
-    private String strArrivalName = "";
+    private ActionBarDrawerToggle toggle;
 
+    private DrawerLayout mDrawerLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,105 +64,62 @@ public class MainActivity extends Activity implements TMapGpsManager.onLocationC
         // UUID & Recent Path List
         String strUUID = this.GetDevicesUUID(this);
         Log.i(TAG, "[ String UUID ] : " + strUUID);
-        recentPathList = new String[9];
-        destinationList = new ArrayList<>();
 
-        initRecentPath();
-        initInternetAndButton();
+        //Add toolbar
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar.setTitle("");
+        setSupportActionBar(toolbar);
 
-        /*
-            GPS
-         */
-        tMapGpsManager = new TMapGpsManager(this);
-        tMapGpsManager.setProvider(TMapGpsManager.NETWORK_PROVIDER);
-        tMapGpsManager.OpenGps();
+        if (savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.fragment, new HomeFragment()).commit();
+        }
+
+
+        //Add DrawerLayout
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        toggle = new ActionBarDrawerToggle(
+                this, mDrawerLayout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close) {
+            /** Called when a drawer has settled in a completely closed state. */
+            public void onDrawerClosed(View view) {
+                super.onDrawerClosed(view);
+                Log.i(TAG, "onDrawerClosed is called");
+            }
+
+            /** Called when a drawer has settled in a completely open state. */
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                Log.i(TAG, "onDrawerOpened is called");
+            }
+        };
+        mDrawerLayout.addDrawerListener(toggle);
+        toggle.syncState();
+
+        navigationView = (NavigationView) findViewById(R.id.navigation_view);
+        navigationView.setNavigationItemSelectedListener(navigationItemSelectedListener);
+
 
     }   // onCreate
 
-    public void initRecentPath(){
-        // [ 최근에 검색한 경로 9개 ]
-        Retrofit client = new Retrofit.Builder().baseUrl(ApiService.SERVER_URL).addConverterFactory(GsonConverterFactory.create()).build();
-        ApiService apiService = client.create(ApiService.class);
-        Call<RecentPathVO> call = apiService.getRecentPath();
-        call.enqueue(new Callback<RecentPathVO>() {
-            @Override
-            public void onResponse(Call<RecentPathVO> call, Response<RecentPathVO> response) {
-                if(response.isSuccessful()) {
-                    RecentPathListVO vo;
-                    String arrivalName = "";
-                    String strLatitude = "";
-                    String strLongitude = "";
-                    double longitudeValue = 0.0;
-                    double latitudeValue = 0.0;
-
-                    int length = response.body().getResult().size();
-                    for(int i=0; i<length ; i++){
-                        arrivalName = response.body().getResult().get(i).getArrivalName();
-                        strLongitude = response.body().getResult().get(i).getLatitudeValue();
-                        Log.i(TAG, "[ Longitude ] = " + strLongitude);
-                        longitudeValue = Double.parseDouble(strLongitude);
-                        strLatitude = response.body().getResult().get(i).getLongitudeValue();
-                        Log.i(TAG, "[ Latitude ] = " + strLatitude);
-                        latitudeValue = Double.parseDouble(strLatitude);
 
 
-                        recentPathList[i] = arrivalName;
-                        vo = new RecentPathListVO(arrivalName, latitudeValue, longitudeValue);
-                        destinationList.add(vo);
-                    }   // for
+    // When drawerLayout is activated, fragment can be replaced.
+    NavigationView.OnNavigationItemSelectedListener navigationItemSelectedListener = new NavigationView.OnNavigationItemSelectedListener() {
+        @Override
+        public boolean onNavigationItemSelected(MenuItem item) {
+            mDrawerLayout.closeDrawer(GravityCompat.START);
 
-                    /*==========
-                        GridView [ recentPathList에 값을 넣기전에 GridView Adapter로 null 값을 보내버리기 때문에 여기에 위치함 ]
-                    ==========*/
-                    gridView = (GridView) findViewById(R.id.gridview);
-                    gridView.setAdapter(new GridViewAdapter(MainActivity.this, recentPathList));
-                    gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                        @Override
-                        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                            recentPathClicked(recentPathList[position]);
-                        }
-                    });
-                }   // respsone.isSuccessful
-            }   // onResponse
-
-            @Override
-            public void onFailure(Call<RecentPathVO> call, Throwable t) {
-                Log.i(TAG, "[ on Failure ] ");
-                Log.i(TAG, "[ Throwable ] : " + t.toString());
-                Log.i(TAG, "[ RecentPathVO Call ] : " + call);
+            Fragment fragment = null;
+            final FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+            switch (item.getItemId()) {
+                case R.id.home:
+                    fragment = new HomeFragment();
+                    break;
             }
-        });
-    }
-
-    public void initInternetAndButton(){
-
-        // 인터넷 연결 체크
-        ConnectivityManager manager = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
-        final NetworkInfo mobile = manager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
-        final NetworkInfo wifi = manager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-
-        /*
-            Search
-         */
-        btn_searchDest = (Button) findViewById(R.id.btn_searchDest);
-        btn_searchDest.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                // wifi 또는 모바일 네트워크 하나라도 연결이 되어있다면,
-                if (wifi.isConnected() || mobile.isConnected()) {
-                    Log.i(TAG, "[ 인터넷 연결이 완료됨. ] ");
-                    tMapGpsManager.CloseGps();
-                    startActivity(new Intent(MainActivity.this, SearchDestinationActivity.class));                     // 좌측으로 사라지기
-                    overridePendingTransition(R.anim.anim_slide_in_right, R.anim.anim_slide_out_left);      // 새로운 Activity Animation / 현재의 Activity Animation
-                } else {
-                    Log.i(TAG, "[ 인터넷 연결이 필요함. ] ");
-                    Toast.makeText(getApplicationContext(), "[ 인터넷 연결이 필요합니다. ] ", Toast.LENGTH_LONG).show();
-                }
-            }
-        }); // btn_searchDest
-    }   // [ End InitInternetAndButton ]
-
+            ft.replace(R.id.fragment, fragment).commit();
+            return true;
+        }
+    };
 
     @Override
     public void onLocationChange(Location location) {
@@ -199,93 +145,7 @@ public class MainActivity extends Activity implements TMapGpsManager.onLocationC
         return deviceId;
     }
 
-    // [ 최근 경로를 클릭했을 경우, PathInfoActivitiy로 전환 ]
-    public void recentPathClicked(String arrival_name){
 
-        strArrivalName = arrival_name;
-        for(int i=0; i<destinationList.size(); i++){
-            if(strArrivalName.equals(destinationList.get(i).getArrivalName())){
-                destination_longitude = destinationList.get(i).getLongitudeValue();
-                destination_latitude = destinationList.get(i).getLatitudeValue();
-                break;
-            }
-        }
-
-        long searchDate = System.currentTimeMillis();
-        String userUUID = "AAF3:0000:0000:0000";
-        String strSearchDate = String.valueOf(searchDate);
-        String strArrivalLongitude = String.valueOf(destination_longitude);
-        String strArrivalLatitude = String.valueOf(destination_latitude);
-
-        // [ DB 저장 ]
-        Retrofit client = new Retrofit.Builder().baseUrl(ApiService.SERVER_URL).addConverterFactory(GsonConverterFactory.create()).build();
-        ApiService apiService = client.create(ApiService.class);
-        Call<ResponseBody> call = apiService.saveRoute(userUUID, strArrivalName, strSearchDate, strArrivalLongitude, strArrivalLatitude);
-        call.enqueue(new Callback<ResponseBody>() {
-            @Override
-            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                if (response.isSuccessful()) {
-                    ProgressAsync progressAsync = new ProgressAsync();
-                    progressAsync.execute();
-                }
-            }
-
-            @Override
-            public void onFailure(Call<ResponseBody> call, Throwable t) {
-
-            }
-        }); // [ End Retrofit( Save Route ) ]
-    }   // [ End recentPathClicked ]
-
-    private class ProgressAsync extends AsyncTask<Void, Void, Void> {
-
-        ProgressDialog progressDialog = new ProgressDialog(MainActivity.this);
-
-        @Override
-        protected void onPreExecute() {
-            Log.i(TAG, "[ On Pre Execute ]");
-            progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-            progressDialog.setMessage("로딩중입니다.");
-            progressDialog.show();
-            super.onPreExecute();
-        }
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            Log.i(TAG, "[ Do In Background ] ");
-            while(true){
-                if( UserException.STATIC_CURRENT_LONGITUDE == 0 || UserException.STATIC_CURRENT_LATITUDE == 0 ) {
-                    continue;
-                }
-                else {
-                    UserException.STATIC_CURRENT_GPS_CHECK = true;
-                    if(UserException.STATIC_CURRENT_GPS_CHECK){
-                        Log.i(TAG, "[ ArrivalName ]: " + strArrivalName);
-                        Log.i(TAG, "[ Destination Longitude ]: " + destination_longitude);
-                        Log.i(TAG, "[ Destination Latitude ]: " + destination_latitude);
-
-                        Intent intent = new Intent(MainActivity.this, PathInfoActivity.class);
-                        intent.putExtra("arrival_name", strArrivalName);
-                        intent.putExtra("des_longitude", destination_longitude);
-                        intent.putExtra("des_latitude", destination_latitude);
-                        startActivity(intent);
-                        overridePendingTransition(R.anim.anim_slide_fade_in, R.anim.anim_slide_out_left);
-                    }else{
-                        Toast.makeText(getApplicationContext(), "GPS를 활성화 해주세요.", Toast.LENGTH_LONG).show();
-                    }
-                    break;
-                }
-            }
-            return null;
-        }   // doInBackground
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            Log.i(TAG, "[ On Post Execute ] ");
-            progressDialog.dismiss();
-            super.onPostExecute(aVoid);
-        }   // onPostExecute
-    }   // ProgressAsync
 
     //
     @Override
@@ -296,15 +156,11 @@ public class MainActivity extends Activity implements TMapGpsManager.onLocationC
     @Override
     protected void onResume() {
         super.onResume();
-        initRecentPath();
-        initInternetAndButton();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        // GPS중단
-        tMapGpsManager.CloseGps();
     }
 
     @Override

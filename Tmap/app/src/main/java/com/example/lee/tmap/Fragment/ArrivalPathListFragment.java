@@ -1,4 +1,4 @@
-package com.example.lee.tmap.Activity;
+package com.example.lee.tmap.Fragment;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
@@ -6,22 +6,27 @@ import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v7.app.AppCompatActivity;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.Button;
-import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.example.lee.tmap.Activity.PathInfoActivity;
 import com.example.lee.tmap.Adapter.ListViewAdapter;
 import com.example.lee.tmap.ApiService;
 import com.example.lee.tmap.POIItem;
 import com.example.lee.tmap.R;
 import com.example.lee.tmap.UserException;
+import com.example.lee.tmap.View.ClearEditText;
 import com.skp.Tmap.TMapData;
 import com.skp.Tmap.TMapGpsManager;
 import com.skp.Tmap.TMapPOIItem;
@@ -37,21 +42,27 @@ import retrofit2.GsonConverterFactory;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 
-public class SearchDestinationActivity extends AppCompatActivity implements TMapGpsManager.onLocationChangedCallback{
-
-    public static final String TAG = "SearchDestiActivity";
+/**
+ * Created by Nam on 2016. 12. 6..
+ */
+public class ArrivalPathListFragment extends Fragment implements TMapGpsManager.onLocationChangedCallback {
+    private final static String TAG = ArrivalPathListFragment.class.getSimpleName();
     public static final String APP_KEY = "483f055b-19f2-3a22-a3fb-935bc1684b0b";
-    private Button btn_back, btn_searchDest, btn_viewmap;
+
+    public static double cur_longitude = 0.0;
+    public static double cur_latitude = 0.0;
+
+    private Toolbar toolbar;
+    private ClearEditText et_destination;
+    private LinearLayout layout_search;
 
     public static double des_longitude = 0.0;
     public static double des_latitude = 0.0;
     public static String des_name = "";
 
-
     /*
         POI Search
      */
-    private EditText edit_destination;
     private TMapData tMapData = null;
     public static TMapPOIItem tMapPOIItem = null;
     public static final int radius = 30;
@@ -89,16 +100,35 @@ public class SearchDestinationActivity extends AppCompatActivity implements TMap
      */
     private TMapGpsManager tMapGpsManager;
 
+    @Nullable
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_search_destination);
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        Log.i(TAG, "onCreateView() is called.");
+        return inflater.inflate(R.layout.fragment_arrival_path_list, container, false);
+    }
+
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        Log.i(TAG, "onViewCreated() is called.");
+        super.onViewCreated(view, savedInstanceState);
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        Log.i(TAG, "onActivityCreated() is called.");
+        super.onActivityCreated(savedInstanceState);
+
+        toolbar = (Toolbar) getActivity().findViewById(R.id.toolbar);
+        et_destination = (ClearEditText) toolbar.findViewById(R.id.et_destination);
+        listview_destination = (ListView) getView().findViewById(R.id.listview_destination);
+
+        et_destination.addTextChangedListener(destinationTextWatcher);
+        listview_destination.setOnItemClickListener(destinationListViewOnItemClickListener);
 
         // GPS
-        tMapGpsManager = new TMapGpsManager(this);
+        tMapGpsManager = new TMapGpsManager(getActivity());
         tMapGpsManager.setProvider(TMapGpsManager.NETWORK_PROVIDER);
         tMapGpsManager.OpenGps();
-
 
         // progress dialog
         mHandler = new Handler();
@@ -113,151 +143,30 @@ public class SearchDestinationActivity extends AppCompatActivity implements TMap
         /*
             통합검색 POI데이터
          */
-        TMapTapi tmaptapi = new TMapTapi(this);
+        TMapTapi tmaptapi = new TMapTapi(getActivity());
         tmaptapi.setSKPMapAuthentication(APP_KEY);
         tMapData = new TMapData();
 
-        edit_destination = (EditText) findViewById(R.id.edit_destination);
-
-
-        // Listview
-        listview_destination = (ListView) findViewById(R.id.listview_destination);
-        listview_destination.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                POIItem item = (POIItem) parent.getItemAtPosition(position);
-                /*==========
-                    if(autoCheck) : 명칭이름을 쓰는도중에 명칭이름이 나온 경우이다.
-                    따라서, 명칭이름을 클릭하여 ListView를 새롭게 Update 해줘야하기 떄문에,
-                    클릭한 명칭이름을 selectDestination으로 보내어, 해당 명칭을 검색했을때 나오는 명칭들로 ListView를 Update
-
-                    else : 명칭이름을 사용자가 모두 입력했을 경우이다.
-                    따라서, 클릭했을때에는, 명칭에서 위도, 경도가 포함되어있기때문에,
-                    위도와 경도를 다음 액티비티로 전달해주면 된다.
-                 */
-                if (autoCheck) selectDestination(item.getmName().toString());
-                else {
-                    des_longitude = item.getPoint().getLongitude();
-                    des_latitude = item.getPoint().getLatitude();
-                    des_name = item.getmName().toString();
-
-                    onDestinationClick(des_name, des_longitude, des_latitude);
-                }   // eise - if( autoCheck )
-            }   // onItemClick
-        });
 
 
         /*
-            AutoComplete
-         */
-        edit_destination = (EditText) findViewById(R.id.edit_destination);
-        edit_destination.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                adapter = new ListViewAdapter();
-                listview_destination.setAdapter(adapter);
-
-                String search = edit_destination.getText().toString();
-                tMapData.autoComplete(search, new TMapData.AutoCompleteListenerCallback() {
-                    @Override
-                    public void onAutoComplete(ArrayList<String> auto_list) {
-                        for (int i = 0; i < auto_list.size(); i++) {
-                            String name = auto_list.get(i);
-                            adapter.autoListAddItem(name);
-                        }   // for
-
-                         /*
-                            UI 변환
-                         */
-                        new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        autoCheck = true;
-                                        adapter.notifyDataSetChanged();
-                                        // 해당 작업을 처리함
-                                    }
-                                });
-                            }
-                        }).start();
-                    }   // onAutoComplete
-                }); // tMapData.autoComplete
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-
-            }
-        });
-
-
-        /*
-            Button
-         */
-        // 목적지 검색
-        btn_searchDest = (Button) findViewById(R.id.btn_searchDest);
-        btn_searchDest.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String search = edit_destination.getText().toString();
-                selectDestination(search);
-                                         /*
-                            UI 변환
-                         */
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                autoCheck = true;
-                                adapter.notifyDataSetChanged();
-                                // 해당 작업을 처리함
-                            }
-                        });
-                    }
-                }).start();
-
-            }   // [ End onClick ]
-        });
-
-//        // 경로안내 지도보기
-//        btn_viewmap = (Button) findViewById(R.id.btn_viewmap);
-//        btn_viewmap.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                Intent intent = new Intent(SearchDestinationActivity.this, PathInfoActivity.class);
-//                intent.putExtra("des_longitude", des_longitude);
-//                intent.putExtra("des_latitude", des_latitude);
-//                intent.putExtra("arrival_name", des_name);
-//                startActivity(intent);
-//                overridePendingTransition(R.anim.anim_slide_fade_in, R.anim.anim_slide_out_left);
-//            }
-//        });
-
         // 뒤로가기 버튼
-        btn_back = (Button) findViewById(R.id.btn_back);
+        btn_back = (Button) getView().findViewById(R.id.btn_back);
         btn_back.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(SearchDestinationActivity.this, MainActivity.class));                     // 우측으로 사라지기
-                overridePendingTransition(R.anim.anim_slide_in_left, R.anim.anim_slide_out_right);
-                finish();
+                tMapGpsManager.CloseGps();
+                HomeFragment fragment = new HomeFragment();
+                getActivity().getSupportFragmentManager().beginTransaction().replace(R.id.fragment, fragment).commit();
             }
         });
-    }   // onCreate
-
+        */
+    }
 
     public void selectDestination(String searchName) {
         String destination = "";
         if (autoCheck) destination = searchName;
-        else destination = edit_destination.getText().toString();
+        else destination = et_destination.getText().toString();
 
         Log.i("SearchActivity", "destination : " + destination);
 
@@ -286,7 +195,7 @@ public class SearchDestinationActivity extends AppCompatActivity implements TMap
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        runOnUiThread(new Runnable() {
+                        getActivity().runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
                                 autoCheck = false;
@@ -303,7 +212,7 @@ public class SearchDestinationActivity extends AppCompatActivity implements TMap
 
     private class ProgressAsync extends AsyncTask<Void, Void, Void> {
 
-        ProgressDialog progressDialog = new ProgressDialog(SearchDestinationActivity.this);
+        ProgressDialog progressDialog = new ProgressDialog(getActivity());
 
         @Override
         protected void onPreExecute() {
@@ -317,21 +226,21 @@ public class SearchDestinationActivity extends AppCompatActivity implements TMap
         @Override
         protected Void doInBackground(Void... params) {
             Log.i(TAG, "[ Do In Background ] ");
-            while(true){
-                if( UserException.STATIC_CURRENT_LONGITUDE == 0 || UserException.STATIC_CURRENT_LATITUDE == 0 ) {
+            while (true) {
+                if (UserException.STATIC_CURRENT_LONGITUDE == 0 || UserException.STATIC_CURRENT_LATITUDE == 0) {
                     continue;
-                }
-                else {
+                } else {
                     UserException.STATIC_CURRENT_GPS_CHECK = true;
-                    if(UserException.STATIC_CURRENT_GPS_CHECK){
-                        Intent intent = new Intent(SearchDestinationActivity.this, PathInfoActivity.class);
+                    if (UserException.STATIC_CURRENT_GPS_CHECK) {
+
+                        Intent intent = new Intent(getActivity(), PathInfoActivity.class);
                         intent.putExtra("des_longitude", des_longitude);
                         intent.putExtra("des_latitude", des_latitude);
                         intent.putExtra("arrival_name", des_name);
                         startActivity(intent);
-                        overridePendingTransition(R.anim.anim_slide_fade_in, R.anim.anim_slide_out_left);
-                    }else{
-                        Toast.makeText(getApplicationContext(), "GPS를 활성화 해주세요.", Toast.LENGTH_LONG).show();
+                        getActivity().overridePendingTransition(R.anim.anim_slide_fade_in, R.anim.anim_slide_out_left);
+                    } else {
+                        Toast.makeText(getActivity(), "GPS를 활성화 해주세요.", Toast.LENGTH_LONG).show();
                     }
                     break;
                 }
@@ -347,7 +256,7 @@ public class SearchDestinationActivity extends AppCompatActivity implements TMap
         }   // onPostExecute
     }   // ProgressAsync
 
-    public void onDestinationClick(String arrival_name, double arrival_longitude, double arrival_latitude ){
+    public void onDestinationClick(String arrival_name, double arrival_longitude, double arrival_latitude) {
 
         long searchDate = System.currentTimeMillis();
         String userUUID = "AAF3:0000:0000:0000";
@@ -374,40 +283,120 @@ public class SearchDestinationActivity extends AppCompatActivity implements TMap
 
             }
         }); // [ End Retrofit( Save Route ) ]
+
     }   // onDestinationClick
+
 
     @Override
     public void onLocationChange(Location location) {
         UserException.STATIC_CURRENT_LATITUDE = location.getLatitude();
         UserException.STATIC_CURRENT_LONGITUDE = location.getLongitude();
-    }   // onLocationChange
+
+        Log.i(TAG, "[ SearchDestinationActivity On Location Change ]");
+    }
+
+
+    private AdapterView.OnItemClickListener destinationListViewOnItemClickListener = new AdapterView.OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            POIItem item = (POIItem) parent.getItemAtPosition(position);
+                /*==========
+                    if(autoCheck) : 명칭이름을 쓰는도중에 명칭이름이 나온 경우이다.
+                    따라서, 명칭이름을 클릭하여 ListView를 새롭게 Update 해줘야하기 떄문에,
+                    클릭한 명칭이름을 selectDestination으로 보내어, 해당 명칭을 검색했을때 나오는 명칭들로 ListView를 Update
+
+                    else : 명칭이름을 사용자가 모두 입력했을 경우이다.
+                    따라서, 클릭했을때에는, 명칭에서 위도, 경도가 포함되어있기때문에,
+                    위도와 경도를 다음 액티비티로 전달해주면 된다.
+                 */
+            if (autoCheck) selectDestination(item.getmName().toString());
+            else {
+                des_longitude = item.getPoint().getLongitude();
+                des_latitude = item.getPoint().getLatitude();
+                des_name = item.getmName().toString();
+
+                onDestinationClick(des_name, des_longitude, des_latitude);
+            }   // eise - if( autoCheck )
+        }   // onItemClick
+    };
+
+
+    private TextWatcher destinationTextWatcher = new TextWatcher() {
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            adapter = new ListViewAdapter();
+            listview_destination.setAdapter(adapter);
+
+            String search = et_destination.getText().toString();
+            tMapData.autoComplete(search, new TMapData.AutoCompleteListenerCallback() {
+                @Override
+                public void onAutoComplete(ArrayList<String> auto_list) {
+                    for (int i = 0; i < auto_list.size(); i++) {
+                        String name = auto_list.get(i);
+                        adapter.autoListAddItem(name);
+                    }   // for
+
+
+                    //   UI 변환
+
+                  new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            getActivity().runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    autoCheck = true;
+                                    adapter.notifyDataSetChanged();
+                                    // 해당 작업을 처리함
+                                }
+                            });
+                        }
+                    }).start();
+
+                }   // onAutoComplete
+            }); // tMapData.autoComplete
+        }
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+        }
+    };
+
 
     @Override
-    protected void onStart() {
+    public void onStart() {
+        Log.i(TAG, "onStart() is called.");
         super.onStart();
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        // GPS중단
+    public void onDestroy() {
+        Log.i(TAG, "onDestroy() is called.");
+        super.onDestroy();
         tMapGpsManager.CloseGps();
     }
 
     @Override
-    protected void onStop() {
+    public void onStop() {
+        Log.i(TAG, "onStop() is called.");
         super.onStop();
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        // Thread 종료
-        mHandler.removeMessages(0);
+    public void onPause() {
+        Log.i(TAG, "onPause() is called.");
+        super.onPause();
     }
+
+    @Override
+    public void onResume() {
+        Log.i(TAG, "onResume() is called.");
+        super.onResume();
+    }
+
+
 }

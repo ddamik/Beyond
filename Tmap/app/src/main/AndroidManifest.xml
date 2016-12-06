@@ -12,7 +12,6 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>           <!-- UUID -->
 
-
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -20,25 +19,19 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:largeHeap="true">
-        <activity android:name=".Activity.SplashActivity"
-            android:theme="@android:style/Theme.NoTitleBar">
+        <activity android:name=".Activity.SplashActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".Activity.MainActivity"
-            android:theme="@android:style/Theme.NoTitleBar"/>
+        <activity android:name=".Activity.MainActivity"/>
         <activity android:name=".Activity.SearchDestinationActivity"
-            android:theme="@android:style/Theme.NoTitleBar"
             android:windowSoftInputMode="adjustNothing"/>
-        <activity android:name=".Activity.PathInfoActivity"
-            android:theme="@android:style/Theme.NoTitleBar"/>
-        <activity android:name=".Activity.GuideActivity"
-            android:theme="@android:style/Theme.NoTitleBar"/>
-        <activity android:name=".Activity.SimulationActivity"
-            android:theme="@android:style/Theme.NoTitleBar"/>
+        <activity android:name=".Activity.PathInfoActivity" />
+        <activity android:name=".Activity.GuideActivity" />
+        <activity android:name=".Activity.SimulationActivity" />
     </application>
 
 </manifest>
