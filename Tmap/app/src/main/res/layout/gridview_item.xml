@@ -6,10 +6,17 @@
 
     <TextView
         android:id="@+id/tv_destination"
+        android:background="@drawable/border_arrival"
         android:layout_height="match_parent"
         android:layout_width="match_parent"
+        android:paddingBottom="50dp"
+        android:paddingTop="50dp"
         android:gravity="center"
-        android:textColor="@color/grid_font_color"
+        android:fontFamily="sans-serif-light"
+        android:textStyle="bold"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:textColor="@color/bg_black_light"
         android:textSize="@dimen/grid_font_size"
         android:typeface="sans" />
 

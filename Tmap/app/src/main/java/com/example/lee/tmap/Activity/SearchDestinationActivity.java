@@ -6,6 +6,7 @@ import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -13,12 +14,13 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
+import android.widget.Toast;
 
 import com.example.lee.tmap.Adapter.ListViewAdapter;
 import com.example.lee.tmap.POIItem;
 import com.example.lee.tmap.R;
 import com.example.lee.tmap.UserException;
-import com.example.lee.tmap.ValueObject.ArrivalDataVO;
 import com.skp.Tmap.TMapData;
 import com.skp.Tmap.TMapGpsManager;
 import com.skp.Tmap.TMapPOIItem;
@@ -27,11 +29,7 @@ import com.skp.Tmap.TMapTapi;
 
 import java.util.ArrayList;
 
-import android.app.Activity;
-import android.widget.ListView;
-import android.widget.Toast;
-
-public class SearchDestinationActivity extends Activity implements TMapGpsManager.onLocationChangedCallback{
+public class SearchDestinationActivity extends AppCompatActivity implements TMapGpsManager.onLocationChangedCallback{
 
     public static final String TAG = "SearchDestiActivity";
     public static final String APP_KEY = "483f055b-19f2-3a22-a3fb-935bc1684b0b";

@@ -1,12 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="app_primary">#2E75B6</color>
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
-    <color name="transparent">#FF4081</color>
+    <color name="transparent">#00000000</color>
     <color name="bg_black">#000000</color>
     <color name="bg_black_20">#AA000000</color>
+    <color name="bg_black_light">#aa363636</color>
     <color name="font_white">#FFFFFF</color>
     <color name="tmap_font_color">#2E75B6</color>
+    <color name="search_font_color">#FF252525</color>
+    <color name="blue_light">#9dcbf5</color>
+    <color name="grey_light">#b3b3b3</color>
+    <color name="grey_dark">#6e6e6e</color>
     <color name="grid_font_color">#000000</color>
+    <color name="white">#FFFFFF</color>
 </resources>

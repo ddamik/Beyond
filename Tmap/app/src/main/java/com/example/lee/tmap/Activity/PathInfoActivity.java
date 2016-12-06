@@ -1,12 +1,12 @@
 package com.example.lee.tmap.Activity;
 
 
-import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
@@ -14,6 +14,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.example.lee.tmap.ApiService;
+import com.example.lee.tmap.Fragment.ArrivalPathListFragment;
 import com.example.lee.tmap.R;
 import com.example.lee.tmap.UserException;
 import com.example.lee.tmap.ValueObject.ReverseGeocodingVO;
@@ -33,7 +34,7 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 
 
-public class PathInfoActivity extends Activity {
+public class PathInfoActivity extends AppCompatActivity {
 
     public static final String TAG = "PathInfoActivity";
     public static float ZOOM_LEVEL = 15;
@@ -112,7 +113,6 @@ public class PathInfoActivity extends Activity {
         tv_time = (TextView) findViewById(R.id.tv_time);
 
 
-
         pathInfo = new ArrayList<TmapDataVO>();
         tMapData = new TMapData();
         initLocation();                 // 시작할때의 현재위치를 가져온다. TMap은 Point 기준이기때문에 위도와 경도를 Point로 셋팅.
@@ -156,7 +156,7 @@ public class PathInfoActivity extends Activity {
                 startActivity(intent);
             }
         });
-   }   //onCreate
+    }   //onCreate
 
 
     public void initMapView() {
@@ -186,9 +186,12 @@ public class PathInfoActivity extends Activity {
     // 시작할때 현재 위치를 가져옴. [ GPS가 잡는 속도가 느려서 Search할때 현재의 위도와 경도를 얻고, 그 값을 가져온다. ]
     public void initLocation() {
 
-        des_longitude = SearchDestinationActivity.des_longitude;
-        des_latitude = SearchDestinationActivity.des_latitude;
-        arrival_name = SearchDestinationActivity.des_name;
+//        des_latitude = SearchDestinationActivity.des_latitude;
+//        des_latitude = SearchDestinationActivity.des_latitude;
+//        arrival_name = SearchDestinationActivity.des_name;
+        des_longitude = ArrivalPathListFragment.des_longitude;
+        des_latitude = ArrivalPathListFragment.des_latitude;
+        arrival_name = ArrivalPathListFragment.des_name;
 
         current_latitude = UserException.STATIC_CURRENT_LATITUDE;
         current_longitude = UserException.STATIC_CURRENT_LONGITUDE;
@@ -202,7 +205,7 @@ public class PathInfoActivity extends Activity {
     }   // initLocation
 
     // 경로정보 보이기
-    public void initPathInfo(TMapPoint startPoint){
+    public void initPathInfo(TMapPoint startPoint) {
 
         String lat = String.valueOf(startPoint.getLatitude());
         String lon = String.valueOf(startPoint.getLongitude());
@@ -221,7 +224,7 @@ public class PathInfoActivity extends Activity {
             public void onResponse(Call<ReverseGeocodingVO> call, Response<ReverseGeocodingVO> response) {
                 Log.i(TAG, "============================== [ Get Address Informatin ] ==============================");
 
-                if(response.isSuccessful()) {
+                if (response.isSuccessful()) {
                     Log.i(TAG, "[ Get Address Info ] Address : " + response.body().getAddressInfo().getFullAddress());
                     Log.i(TAG, "[ Get Address Info ] Cit : " + response.body().getAddressInfo().getCity_do());
                     tv_start_point.setText(response.body().getAddressInfo().getFullAddress());
@@ -256,19 +259,20 @@ public class PathInfoActivity extends Activity {
         call.enqueue(new Callback<TmapDataVO>() {
             @Override
             public void onResponse(Call<TmapDataVO> call, Response<TmapDataVO> response) {
-                if(response.isSuccessful()){
+                if (response.isSuccessful()) {
                     Log.i(TAG, "[ onResponse ] is Success");
                     int length = response.body().getFeatures().size();
-                    for(int i=0 ; i<length ; i++){
-                        Log.i(TAG, "==================== [ Car Path " + i +" ]====================");
-                        if( i == 0 ) {
+                    for (int i = 0; i < length; i++) {
+                        Log.i(TAG, "==================== [ Car Path " + i + " ]====================");
+                        if (i == 0) {
                             setMapView(response.body().getFeatures().get(i).getProperties().getTotalDistance());        // 지도 설정
                             Log.i(TAG, "[ Car Path ] Total Distance : " + response.body().getFeatures().get(i).getProperties().getTotalDistance());
                             Log.i(TAG, "[ Car Path ] Total Time : " + response.body().getFeatures().get(i).getProperties().getTotalTime());
                             Log.i(TAG, "[ Car Path ] Total Fare : " + response.body().getFeatures().get(i).getProperties().getTotalFare());
                             Log.i(TAG, "[ Car Path ] Total TaxiFare : " + response.body().getFeatures().get(i).getProperties().getTaxiFare());
 
-                            int totalTime = response.body().getFeatures().get(i).getProperties().getTotalTime();;
+                            int totalTime = response.body().getFeatures().get(i).getProperties().getTotalTime();
+                            ;
                             int total_fare = response.body().getFeatures().get(i).getProperties().getTotalFare();
                             int total_distance = response.body().getFeatures().get(i).getProperties().getTotalDistance();
 
@@ -295,14 +299,14 @@ public class PathInfoActivity extends Activity {
 
 
     // 경로안내 시작 누르기 전에, 전체경로를 보여주는 지도 셋팅부분
-    public void setMapView(int total_distance){
+    public void setMapView(int total_distance) {
         int set_zoom_level = 0;                                             // 7-19 레벨 설정가능
-        if( total_distance < 1000 ) set_zoom_level = 17;                    // 1km
-        else if( total_distance < 5000 ) set_zoom_level = 14;               // 5km
-        else if( total_distance < 10000 ) set_zoom_level = 12;              // 10km
-        else if( total_distance < 30000 ) set_zoom_level = 11;              // 30km
-        else if( total_distance < 70000 ) set_zoom_level = 10;              // 70km
-        else if( total_distance < 150000 ) set_zoom_level = 9;              // 150km
+        if (total_distance < 1000) set_zoom_level = 17;                    // 1km
+        else if (total_distance < 5000) set_zoom_level = 14;               // 5km
+        else if (total_distance < 10000) set_zoom_level = 12;              // 10km
+        else if (total_distance < 30000) set_zoom_level = 11;              // 30km
+        else if (total_distance < 70000) set_zoom_level = 10;              // 70km
+        else if (total_distance < 150000) set_zoom_level = 9;              // 150km
         else set_zoom_level = 7;                                            // 그 이상
 
         Log.i(TAG, "[ Total Distance ] : " + total_distance + " / [ Set Zoom Level ] : " + set_zoom_level);
@@ -312,8 +316,6 @@ public class PathInfoActivity extends Activity {
         tmapview.setCenterPoint(setLongitude, setLatitude, true);
         tmapview.setZoomLevel(set_zoom_level);
     }
-
-
 
 
     // 현재위치 마커찍기

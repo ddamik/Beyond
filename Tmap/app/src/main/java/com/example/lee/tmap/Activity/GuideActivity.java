@@ -1,13 +1,13 @@
 package com.example.lee.tmap.Activity;
 
 
-import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -37,7 +37,7 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 
 
-public class GuideActivity extends Activity implements TMapGpsManager.onLocationChangedCallback {
+public class GuideActivity extends AppCompatActivity implements TMapGpsManager.onLocationChangedCallback {
 
     public static final String TAG = "GuideActivity";
     public static int ZOOM_LEVEL = 19;

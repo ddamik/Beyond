@@ -2,147 +2,106 @@ package com.example.lee.tmap.Activity;
 
 
 import android.content.Context;
-import android.content.Intent;
-import android.app.Activity;
 import android.location.Location;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.support.design.widget.NavigationView;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.Button;
-import android.widget.GridView;
-import android.widget.TextView;
-import android.widget.Toast;
 
-import com.example.lee.tmap.Adapter.GridViewAdapter;
-import com.example.lee.tmap.ApiService;
+import com.example.lee.tmap.Fragment.HomeFragment;
 import com.example.lee.tmap.R;
 import com.example.lee.tmap.UserException;
-import com.example.lee.tmap.ValueObject.RecentPathVO;
 import com.skp.Tmap.TMapGpsManager;
 
-import java.util.ArrayList;
 import java.util.UUID;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.GsonConverterFactory;
-import retrofit2.Response;
-import retrofit2.Retrofit;
 
 
-public class MainActivity extends Activity implements TMapGpsManager.onLocationChangedCallback {
 
-    public static final String TAG = "MainActivity";
+public class MainActivity extends AppCompatActivity implements TMapGpsManager.onLocationChangedCallback {
+
+    public static final String TAG = MainActivity.class.getSimpleName();
 
     public static double cur_longitude = 0.0;
     public static double cur_latitude = 0.0;
-    private TMapGpsManager tMapGpsManager;
+    private static final int SEND_INFOMATION = 1;
+    private static final int SEND_STOP_MESSAGE = 2;
 
-    /*
-        검색
-     */
-    Button btn_searchDest = null;
+    private Toolbar toolbar;
 
+    private NavigationView navigationView;
 
-    /*
-        GridView
-     */
-//    private GridAdapter gridAdapter;
-    private TextView tv_destination;
-    private GridView gridView;
-    private ArrayList<String>  destination_list;
-    String[] recentPathList;
+    private ActionBarDrawerToggle toggle;
 
-
+    private DrawerLayout mDrawerLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // UUID & Recent Path List
-        String strUUID = this.GetDevicesUUID(this);
-        recentPathList = new String[9];
+        //Add toolbar
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar.setTitle("");
+        setSupportActionBar(toolbar);
 
-        Retrofit client = new Retrofit.Builder().baseUrl(ApiService.SERVER_URL).addConverterFactory(GsonConverterFactory.create()).build();
-        ApiService apiService = client.create(ApiService.class);
-        // Call<RecentPathVO> call = apiService.getRecentPath(strUUID);
-        Call<RecentPathVO> call = apiService.getRecentPath();
-        call.enqueue(new Callback<RecentPathVO>() {
-            @Override
-            public void onResponse(Call<RecentPathVO> call, Response<RecentPathVO> response) {
-                if(response.isSuccessful()) {
-                    Log.i(TAG, "[ On Response ] ");
-                    int length = response.body().getResult().size();
-                    for(int i=0; i<length ; i++){
+        if (savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.fragment, new HomeFragment()).commit();
+        }
 
-                        recentPathList[i] = String.valueOf(response.body().getResult().get(i).getARRIVAL_NAME());
-                        Log.i(TAG, "[ Response Body Arrival Name ]["+i+"] & RecentPath : " + response.body().getResult().get(i).getARRIVAL_NAME() + " / " + recentPathList[i]);
-                    }   // for
 
-                    /*==========
-                        GridView [ recentPathList에 값을 넣기전에 GridView Adapter로 null 값을 보내버리기 때문에 여기에 위치함 ]
-                    ==========*/
-                    gridView = (GridView) findViewById(R.id.gridview);
-                    gridView.setAdapter(new GridViewAdapter(MainActivity.this, recentPathList));
-                    gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                        @Override
-                        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                            Toast.makeText(getApplicationContext(), recentPathList[position], Toast.LENGTH_LONG).show();
-                        }
-                    });
-                }   // respsone.isSuccessful
-            }   // onResponse
-
-            @Override
-            public void onFailure(Call<RecentPathVO> call, Throwable t) {
-                Log.i(TAG, "[ on Failure ] ");
-                Log.i(TAG, "[ Throwable ] : " + t.toString());
-                Log.i(TAG, "[ RecentPathVO Call ] : " + call);
+        //Add DrawerLayout
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        toggle = new ActionBarDrawerToggle(
+                this, mDrawerLayout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close) {
+            /** Called when a drawer has settled in a completely closed state. */
+            public void onDrawerClosed(View view) {
+                super.onDrawerClosed(view);
+                Log.i(TAG, "onDrawerClosed is called");
             }
-        });
 
-
-        // 인터넷 연결 체크
-        ConnectivityManager manager = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
-        final NetworkInfo mobile = manager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
-        final NetworkInfo wifi = manager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-
-
-        /*
-            Search
-         */
-        btn_searchDest = (Button) findViewById(R.id.btn_searchDest);
-        btn_searchDest.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                // wifi 또는 모바일 네트워크 하나라도 연결이 되어있다면,
-                if (wifi.isConnected() || mobile.isConnected()) {
-                    Log.i(TAG, "[ 인터넷 연결이 완료됨. ] ");
-                    tMapGpsManager.CloseGps();
-                    startActivity(new Intent(MainActivity.this, SearchDestinationActivity.class));                     // 좌측으로 사라지기
-                    overridePendingTransition(R.anim.anim_slide_in_right, R.anim.anim_slide_out_left);      // 새로운 Activity Animation / 현재의 Activity Animation
-                } else {
-                    Log.i(TAG, "[ 인터넷 연결이 필요함. ] ");
-                    Toast.makeText(getApplicationContext(), "[ 인터넷 연결이 필요합니다. ] ", Toast.LENGTH_LONG).show();
-                }
+            /** Called when a drawer has settled in a completely open state. */
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                Log.i(TAG, "onDrawerOpened is called");
             }
-        }); // btn_searchDest
+        };
+        mDrawerLayout.addDrawerListener(toggle);
+        toggle.syncState();
 
-        /*
-            GPS
-         */
-        tMapGpsManager = new TMapGpsManager(this);
-        tMapGpsManager.setProvider(TMapGpsManager.NETWORK_PROVIDER);
-        tMapGpsManager.OpenGps();
+        navigationView = (NavigationView) findViewById(R.id.navigation_view);
+        navigationView.setNavigationItemSelectedListener(navigationItemSelectedListener);
 
 
     }   // onCreate
+
+    // When drawerLayout is activated, fragment can be replaced.
+    NavigationView.OnNavigationItemSelectedListener navigationItemSelectedListener = new NavigationView.OnNavigationItemSelectedListener() {
+        @Override
+        public boolean onNavigationItemSelected(MenuItem item) {
+            mDrawerLayout.closeDrawer(GravityCompat.START);
+
+            Fragment fragment = null;
+            final FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+            switch (item.getItemId()) {
+                case R.id.home:
+                    fragment = new HomeFragment();
+                    break;
+            }
+            ft.replace(R.id.fragment, fragment).commit();
+            return true;
+        }
+    };
 
     @Override
     public void onLocationChange(Location location) {

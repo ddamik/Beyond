@@ -6,4 +6,8 @@
     <dimen name="address_font_size">18dp</dimen>
     <dimen name="grid_font_size">16dp</dimen>
     <dimen name="gridview_space">5dp</dimen>
+    <dimen name="search_layout_margin">8dp</dimen>
+    <dimen name="search_layout_right_margin">50dp</dimen>
+    <dimen name="search_layout_corner_space">12dp</dimen>
+
 </resources>
