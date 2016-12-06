@@ -2,6 +2,7 @@ package com.example.lee.tmap.Activity;
 
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -92,6 +93,11 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_guide);
 
+        Intent intent = getIntent();
+        String tmpArrival_name = intent.getStringExtra("arrival_name");
+        double tmpLongitude = intent.getDoubleExtra("des_longitude", 0.0);
+        double tmpLatitude = intent.getDoubleExtra("des_latitude", 0.0);
+
         // User Exception ( [ 도착시간 & 소요시간 & 통행요금 & 거리 스트링 변환 ] )
         exception = new UserException();
 
@@ -117,7 +123,7 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
         tMapData = new TMapData();
         initMapView();                  // 지도 초기화
         initGPS();                      // GPS ghkftjdghk
-        initLocation();                 // 시작할때의 현재위치를 가져온다. TMap은 Point 기준이기때문에 위도와 경도를 Point로 셋팅.
+        initLocation(tmpLongitude, tmpLatitude, tmpArrival_name);                 // 시작할때의 현재위치를 가져온다. TMap은 Point 기준이기때문에 위도와 경도를 Point로 셋팅.
 
         // 경로 PolyLine 그리기
         tMapData.findPathDataWithType(TMapData.TMapPathType.CAR_PATH, startPoint, endPoint, new TMapData.FindPathDataListenerCallback() {
@@ -201,18 +207,18 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
     }
 
     // 시작할때 현재 위치를 가져옴. [ GPS가 잡는 속도가 느려서 Search할때 현재의 위도와 경도를 얻고, 그 값을 가져온다. ]
-    public void initLocation() {
-        des_longitude = SearchDestinationActivity.des_longitude;
-        des_latitude = SearchDestinationActivity.des_latitude;
-        des_name = SearchDestinationActivity.des_name;
+    public void initLocation(double tmpLongitude, double tmpLatitude, String strArrivalName) {
+        des_longitude = tmpLongitude;
+        des_latitude = tmpLatitude;
+        des_name = strArrivalName;
 
-        current_latitude = MainActivity.cur_latitude;
-        current_longitude = MainActivity.cur_longitude;
+        current_latitude = UserException.STATIC_CURRENT_LATITUDE;
+        current_longitude = UserException.STATIC_CURRENT_LONGITUDE;
 
         // 맨 처음 StartPoint와 EndPoint를 설정.
         startPoint = new TMapPoint(current_latitude, current_longitude);
         endPoint = new TMapPoint(des_latitude, des_longitude);
-
+        tmapview.setCenterPoint(startPoint.getLongitude(), startPoint.getLatitude(), true);         // [ 현재 위치로 가기 ]
     }   // initLocation
 
     // 길 안내 시작
@@ -236,29 +242,24 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
         call.enqueue(new Callback<TmapDataVO>() {
             @Override
             public void onResponse(Call<TmapDataVO> call, Response<TmapDataVO> response) {
-                if(response.isSuccessful()){
+                if (response.isSuccessful()) {
                     Log.i(TAG, "[ onResponse ] is Success");
                     int length = response.body().getFeatures().size();
-                    for(int i=0 ; i<length ; i++){
-                        Log.i(TAG, "==================== [ GuidActivity Car Path " + i + " ]====================");
-
-                        if( i == 0 ) {
-                            String strDistance = exception.strDistance(response.body().getFeatures().get(i).getProperties().getTotalDistance());
-                            tv_distance.setText(strDistance);
-                            Log.i(TAG, "[ Properties ] Total Distance : " + response.body().getFeatures().get(i).getProperties().getTotalDistance());
-                            Log.i(TAG, "[ Properties ] Total Time : " + response.body().getFeatures().get(i).getProperties().getTotalTime());
-                            Log.i(TAG, "[ Properties ] Total Fare : " + response.body().getFeatures().get(i).getProperties().getTotalFare());
-                            Log.i(TAG, "[ Properties ] Total TaxiFare : " + response.body().getFeatures().get(i).getProperties().getTaxiFare());
+                    for (int i = 0; i < length; i++) {
+                        Log.i(TAG, "==================== [ GuideActivity Car Path " + i + " ]====================");
+                        if (i == 0) {
+                            Log.i(TAG, "[ Car Path ] Total Distance : " + response.body().getFeatures().get(i).getProperties().getTotalDistance());
+                            Log.i(TAG, "[ Car Path ] Total Time : " + response.body().getFeatures().get(i).getProperties().getTotalTime());
+                            Log.i(TAG, "[ Car Path ] Total Fare : " + response.body().getFeatures().get(i).getProperties().getTotalFare());
+                            Log.i(TAG, "[ Car Path ] Total TaxiFare : " + response.body().getFeatures().get(i).getProperties().getTaxiFare());
                         }
-
-                        Log.i(TAG, "[ Properties ] Distance : " + response.body().getFeatures().get(i).getProperties().getDistance());
-                        Log.i(TAG, "[ Properties ] Description : " + response.body().getFeatures().get(i).getProperties().getDescription());
-                        Log.i(TAG, "[ Properties ] TurnType : " + response.body().getFeatures().get(i).getProperties().getTurnType());
-                        Log.i(TAG, "[ Properties ] Index : " + response.body().getFeatures().get(i).getProperties().getIndex());
-
+                        Log.i(TAG, "[ Car Path ] Distance : " + response.body().getFeatures().get(i).getProperties().getDistance());
+                        Log.i(TAG, "[ Car Path ] Description : " + response.body().getFeatures().get(i).getProperties().getDescription());
+                        Log.i(TAG, "[ Car Path ] TurnType : " + response.body().getFeatures().get(i).getProperties().getTurnType());
                     }   // for
                 }   // if(response.isSuccessful())
             }   // onResponse
+
             @Override
             public void onFailure(Call<TmapDataVO> call, Throwable t) {
 

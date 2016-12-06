@@ -687,29 +687,36 @@ public class SimulationActivity extends AppCompatActivity {
     // [ Direction 이미지 변경 ]
     public void changeDirectionImg(int turnType){
         Log.i(TAG, "[ 방향전환이 이뤄졌습니다. TurnType은 : " + turnType + " 입니다. ] ");
+
         switch (turnType){
             case 200:
                 img_direction.setImageResource(R.drawable.direction_200);
+                this.firmwareConnection(4);
                 Log.i(TAG, "[ Direction 200 ] : 출발지입니다. ");
                 break;
             case 201:
                 img_direction.setImageResource(R.drawable.direction_201);
+                this.firmwareConnection(5);
                 Log.i(TAG, "[ Direction 201 ] : 도착지입니다. ");
                 break;
             case 11:
                 img_direction.setImageResource(R.drawable.direction_11);
+                this.firmwareConnection(0);
                 Log.i(TAG, "[ Direction 011 ] : 직진입니다. ");
                 break;
             case 12:
                 img_direction.setImageResource(R.drawable.direction_12);
+                this.firmwareConnection(1);
                 Log.i(TAG, "[ Direction 012 ] : 좌회전입니다. ");
                 break;
             case 13:
                 img_direction.setImageResource(R.drawable.direction_13);
+                this.firmwareConnection(2);
                 Log.i(TAG, "[ Direction 013 ] : 우회전입니다. ");
                 break;
             case 14:
                 img_direction.setImageResource(R.drawable.direction_14);
+                this.firmwareConnection(3);
                 Log.i(TAG, "[ Direction 014 ] : 유턴입니다. ");
                 break;
         }
@@ -743,6 +750,29 @@ public class SimulationActivity extends AppCompatActivity {
             changeDirectionImg(simul_turnType);
         }
     };   // [ End directionHandler ]
+
+    public void firmwareConnection(int turnType){
+        switch (turnType){
+            case 0:
+                Log.i(TAG, "[ Direction 011 ] : 직진입니다. ");
+                break;
+            case 1:
+                Log.i(TAG, "[ Direction 012 ] : 좌회전입니다. ");
+                break;
+            case 2:
+                Log.i(TAG, "[ Direction 013 ] : 우회전입니다. ");
+                break;
+            case 3:
+                Log.i(TAG, "[ Direction 014 ] : 유턴입니다. ");
+                break;
+            case 4:
+                Log.i(TAG, "[ Direction 200 ] : 출발지입니다. ");
+                break;
+            case 5:
+                Log.i(TAG, "[ Direction 201 ] : 도착지입니다. ");
+                break;
+        }   // [ End switch ]
+    }
 
     @Override
     protected void onStart() {

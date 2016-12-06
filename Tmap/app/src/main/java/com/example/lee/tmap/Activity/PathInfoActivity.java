@@ -78,11 +78,8 @@ public class PathInfoActivity extends AppCompatActivity {
     ImageButton btn_startGuide;
     public ArrayList<TmapDataVO> pathInfo;
     public static final int OPTION_DEFAULT = 0;
-
-
-    /*
-        모의주행
-     */
+    private String tmpArrival_name;
+    // 모의주행
     ImageButton btn_simulation;
 
     /*
@@ -105,7 +102,7 @@ public class PathInfoActivity extends AppCompatActivity {
 
         // 어느 Activity에서 경로를 요청했는지 구분
         Intent intent = getIntent();
-        String tmpArrival_name = intent.getStringExtra("arrival_name");
+        tmpArrival_name = intent.getStringExtra("arrival_name");
         double tmpLongitude = intent.getDoubleExtra("des_longitude", 0.0);
         double tmpLatitude = intent.getDoubleExtra("des_latitude", 0.0);
 
@@ -151,6 +148,9 @@ public class PathInfoActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(PathInfoActivity.this, GuideActivity.class);
+                intent.putExtra("des_latitude", des_latitude);
+                intent.putExtra("des_longitude", des_longitude);
+                intent.putExtra("arrival_name", tmpArrival_name);
                 startActivity(intent);
                 finish();
             }
