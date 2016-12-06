@@ -172,13 +172,7 @@ public class SimulationActivity extends AppCompatActivity {
         options.inSampleSize = 2;
         Bitmap bitmap = BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.guide_arrow_blue, options);
 
-        tpoint = new TMapPoint(startPoint.getLatitude(), startPoint.getLongitude());
-        tMapMarkerItem = new TMapMarkerItem();
-        tMapMarkerItem.setTMapPoint(tpoint);
-        tMapMarkerItem.setVisible(TMapMarkerItem.VISIBLE);
-        tMapMarkerItem.setIcon(bitmap);
-        tMapMarkerItem.setPosition(1, 1);
-        tmapview.addMarkerItem("", tMapMarkerItem);
+        tmapview.setIcon(bitmap);
         tmapview.setIconVisibility(true);
 
         // [ 안내종료 버튼 ]
@@ -241,20 +235,13 @@ public class SimulationActivity extends AppCompatActivity {
         tmapview.setSKPMapApiKey(APP_KEY);
         tmapview.setLanguage(TMapView.LANGUAGE_KOREAN);
 
-        tmapview.setIconVisibility(true);                   // 현재 위치로 표시될 아이콘을 표시
+//        tmapview.setIconVisibility(true);                   // 현재 위치로 표시될 아이콘을 표시
         tmapview.setZoomLevel(ZOOM_LEVEL);                       // 지도레벨 설정 7~19
         tmapview.setMapType(TMapView.MAPTYPE_STANDARD);     // STANDARD: 일반지도 / SATELLITE: 위성지도[미지원] / HYBRID: 하이브리드[미지원] / TRAFFIC: 실시간 교통지도
         tmapview.setCompassMode(true);                      // 단말의 방향에 따라 움직이는 나침반 모드
         tmapview.setTrackingMode(true);                     // 화면중심을 단말의 현재위치로 이동시켜주는 모드
         tmapview.setMapPosition(TMapView.POSITION_NAVI);    // 네비게이션 모드 ( 화면 중심의 아래쪽으로 중심좌표를 설정 )
         tMapLayout.addView(tmapview);
-        // tmapview.setCenterPoint : 지도의 중심좌표를 이동
-        // tmapview.setLocationPoint : 현재위치로 표시될 좌표의 위도, 경도를 설정
-
-        // 현재 위치로 표시되는 좌표의 위도, 경도를 반환
-        // TMapPoint tpoint = tmapview.getLocationPoint();
-        // double Latitue = tpoint.getLatitude();
-        // double Longitude = tpoint.getLongitude();
     }   // [ End initMapView ]
 
     // [ SimulationCoordinates 위도 & 경도 설정 ]
@@ -536,7 +523,7 @@ public class SimulationActivity extends AppCompatActivity {
             public void run() {
                 while (threadFlag) {
                     try {
-                        Thread.sleep(100);
+                        Thread.sleep(300);
                         // [ turnType == 0 인 경우는 목표지점까지의 거리정보뿐이기때문에 얻을 정보가 없다. 따라서, index를 추가하고 continue; ]
                         if (info_list.get(simul_info_index).getTurnType() == 0){
                             simul_info_index++;
@@ -616,7 +603,6 @@ public class SimulationActivity extends AppCompatActivity {
                         simul_current_latitude += simul_gap_latitude;                                           // [ 현재 위치에서 1m 단위로 경도 위도값을 추가해준다. ]
                         simul_current_longitude += simul_gap_longitude;
 
-//                            tmapview.setLocationPoint(simul_current_longitude, simul_current_latitude);     // // [ 현재 위치로 가기 & 현재 위치를 지도의 중심으로 ]
                         tmapview.setCenterPoint(simul_current_longitude, simul_current_latitude, true);
 
                         simul_coordi_distance = exception.calDistance(simul_current_latitude, simul_current_longitude, simul_next_latitude, simul_next_longitude);                  // [ 다음 GPS 좌표까지 거리 ] / 곡선 처리를 위한 GPS
@@ -736,11 +722,7 @@ public class SimulationActivity extends AppCompatActivity {
             tv_remain_distance.setText(strRemain);
 
             // [ 현재위치 Icon ]
-            tpoint.setLatitude(current_latitude);
-            tpoint.setLongitude(current_longitude);
-            tMapMarkerItem.setTMapPoint(tpoint);
-
-            tmapview.addMarkerItem("", tMapMarkerItem);
+            tmapview.setLocationPoint(simul_current_longitude, simul_current_latitude);     // // [ 현재 위치로 가기 & 현재 위치를 지도의 중심으로 ]
         }
     };   // [ End Handler ]
 

@@ -18,6 +18,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.lee.tmap.ApiService;
 import com.example.lee.tmap.R;
@@ -121,9 +122,18 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
 
         path_list = new ArrayList<>();  // 주행정보
         tMapData = new TMapData();
-        initMapView();                  // 지도 초기화
-        initGPS();                      // GPS ghkftjdghk
+
         initLocation(tmpLongitude, tmpLatitude, tmpArrival_name);                 // 시작할때의 현재위치를 가져온다. TMap은 Point 기준이기때문에 위도와 경도를 Point로 셋팅.
+        initGPS();                      // GPS ghkftjdghk
+        initMapView();                  // 지도 초기화
+
+        tmapview.setCenterPoint(startPoint.getLongitude(), startPoint.getLatitude(), false);         // [ 현재 위치로 가기 ]
+
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inSampleSize = 2;
+        Bitmap bitmap = BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.guide_arrow_blue, options);
+        tmapview.setIcon(bitmap);
+        tmapview.setIconVisibility(true);                   // 현재 위치로 표시될 아이콘을 표시
 
         // 경로 PolyLine 그리기
         tMapData.findPathDataWithType(TMapData.TMapPathType.CAR_PATH, startPoint, endPoint, new TMapData.FindPathDataListenerCallback() {
@@ -144,6 +154,17 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
                 tmapview.setCenterPoint(startPoint.getLongitude(), startPoint.getLatitude(), true);
             }
         });
+
+        // [ 안내종료 버튼 ]
+        img_btn_exit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(getApplicationContext(), "안내를 종료합니다.", Toast.LENGTH_LONG).show();
+                startActivity(new Intent(GuideActivity.this, MainActivity.class));
+                overridePendingTransition(R.anim.anim_slide_fade_in, R.anim.anim_slide_out_left);
+                finish();
+            }
+        }); // [ 안내종료 버튼 ]
    }   //onCreate
 
     // 지도 셋팅
@@ -152,32 +173,17 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
             T-map 초기 세팅
          */
 
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inSampleSize = 2;
-        Bitmap bitmap = BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.guide_arrow_blue, options);
-
-
-
         tMapLayout = (RelativeLayout) findViewById(R.id.guide_tmap);
         tmapview = new TMapView(this);
         tmapview.setSKPMapApiKey(APP_KEY);
         tmapview.setLanguage(TMapView.LANGUAGE_KOREAN);
-        tmapview.setIcon(bitmap);                           // 아이콘 설정
 
-        tmapview.setIconVisibility(true);                   // 현재 위치로 표시될 아이콘을 표시
         tmapview.setZoomLevel(ZOOM_LEVEL);                       // 지도레벨 설정 7~19
         tmapview.setMapType(TMapView.MAPTYPE_STANDARD);     // STANDARD: 일반지도 / SATELLITE: 위성지도[미지원] / HYBRID: 하이브리드[미지원] / TRAFFIC: 실시간 교통지도
         tmapview.setCompassMode(true);                      // 단말의 방향에 따라 움직이는 나침반 모드
         tmapview.setTrackingMode(true);                     // 화면중심을 단말의 현재위치로 이동시켜주는 모드
         tmapview.setMapPosition(TMapView.POSITION_NAVI);    // 네비게이션 모드 ( 화면 중심의 아래쪽으로 중심좌표를 설정 )
         tMapLayout.addView(tmapview);
-        // tmapview.setCenterPoint : 지도의 중심좌표를 이동
-        // tmapview.setLocationPoint : 현재위치로 표시될 좌표의 위도, 경도를 설정
-
-        // 현재 위치로 표시되는 좌표의 위도, 경도를 반환
-        // TMapPoint tpoint = tmapview.getLocationPoint();
-        // double Latitue = tpoint.getLatitude();
-        // double Longitude = tpoint.getLongitude();
     }   // initMapView
 
     // GPS 활성화
@@ -188,8 +194,6 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
         // gps.setProvider(TMapGpsManager.NETWORK_PROVIDER);       // 현재 위치를 가져온다.
         gps.setProvider(TMapGpsManager.GPS_PROVIDER);
         gps.OpenGps();
-
-
     }   // initGPS
 
     @Override
@@ -203,7 +207,8 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
         startPoint.setLongitude(current_longitude);
         startPoint.setLatitude(current_latitude);
 
-        tmapview.setLocationPoint(location.getLongitude(), location.getLatitude());     // 현재 위치를 지도의 중심으로.
+        tmapview.setLocationPoint(startPoint.getLongitude(), startPoint.getLatitude());
+//        tmapview.setCenterPoint(startPoint.getLongitude(), startPoint.getLatitude(), true);
     }
 
     // 시작할때 현재 위치를 가져옴. [ GPS가 잡는 속도가 느려서 Search할때 현재의 위도와 경도를 얻고, 그 값을 가져온다. ]
@@ -218,7 +223,8 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
         // 맨 처음 StartPoint와 EndPoint를 설정.
         startPoint = new TMapPoint(current_latitude, current_longitude);
         endPoint = new TMapPoint(des_latitude, des_longitude);
-        tmapview.setCenterPoint(startPoint.getLongitude(), startPoint.getLatitude(), true);         // [ 현재 위치로 가기 ]
+
+        Log.i(TAG, "[ Start Point ] : " + startPoint.getLongitude() + " / " + startPoint.getLatitude());
     }   // initLocation
 
     // 길 안내 시작
@@ -252,6 +258,14 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
                             Log.i(TAG, "[ Car Path ] Total Time : " + response.body().getFeatures().get(i).getProperties().getTotalTime());
                             Log.i(TAG, "[ Car Path ] Total Fare : " + response.body().getFeatures().get(i).getProperties().getTotalFare());
                             Log.i(TAG, "[ Car Path ] Total TaxiFare : " + response.body().getFeatures().get(i).getProperties().getTaxiFare());
+
+                            int totalTime = response.body().getFeatures().get(i).getProperties().getTotalTime();
+                            int totalDistance = response.body().getFeatures().get(i).getProperties().getTotalDistance();
+                            String arrival_time = exception.strArrival_time(totalTime);
+                            String strRemain = exception.strRemainDistance(totalDistance, totalDistance);
+
+                            tv_remain_distance.setText(strRemain);                // 총 남은 거리
+                            tv_arriaval_time.setText(arrival_time);                 // 도착 예상시간
                         }
                         Log.i(TAG, "[ Car Path ] Distance : " + response.body().getFeatures().get(i).getProperties().getDistance());
                         Log.i(TAG, "[ Car Path ] Description : " + response.body().getFeatures().get(i).getProperties().getDescription());
@@ -276,7 +290,7 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
     @Override
     protected void onResume() {
         super.onResume();
-        gps.OpenGps();
+//        gps.OpenGps();
     }
 
     @Override
