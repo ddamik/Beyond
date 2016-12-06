@@ -30,6 +30,7 @@ import com.skp.Tmap.TMapGpsManager;
 import java.util.ArrayList;
 import java.util.UUID;
 
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.GsonConverterFactory;
@@ -210,8 +211,30 @@ public class MainActivity extends Activity implements TMapGpsManager.onLocationC
             }
         }
 
-        ProgressAsync progressAsync = new ProgressAsync();
-        progressAsync.execute();
+        long searchDate = System.currentTimeMillis();
+        String userUUID = "AAF3:0000:0000:0000";
+        String strSearchDate = String.valueOf(searchDate);
+        String strArrivalLongitude = String.valueOf(destination_longitude);
+        String strArrivalLatitude = String.valueOf(destination_latitude);
+
+        // [ DB 저장 ]
+        Retrofit client = new Retrofit.Builder().baseUrl(ApiService.SERVER_URL).addConverterFactory(GsonConverterFactory.create()).build();
+        ApiService apiService = client.create(ApiService.class);
+        Call<ResponseBody> call = apiService.saveRoute(userUUID, strArrivalName, strSearchDate, strArrivalLongitude, strArrivalLatitude);
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.isSuccessful()) {
+                    ProgressAsync progressAsync = new ProgressAsync();
+                    progressAsync.execute();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+
+            }
+        }); // [ End Retrofit( Save Route ) ]
     }   // [ End recentPathClicked ]
 
     private class ProgressAsync extends AsyncTask<Void, Void, Void> {

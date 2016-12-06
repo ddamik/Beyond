@@ -199,7 +199,6 @@ public class SearchDestinationActivity extends Activity implements TMapGpsManage
         });
 
 
-
         /*
             Button
          */
@@ -366,13 +365,9 @@ public class SearchDestinationActivity extends Activity implements TMapGpsManage
         call.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                Log.i(TAG, "[ Retrofit Save Route Status ]: " + response.code());
                 if (response.isSuccessful()) {
-                    Log.i(TAG, response.body().toString());
-                    Log.i(TAG, "[ On Destination Click ] ");
                     ProgressAsync progressAsync = new ProgressAsync();
                     progressAsync.execute();
-                    Log.i(TAG, "[ After Execute ]");
                 }
             }
 
@@ -385,11 +380,8 @@ public class SearchDestinationActivity extends Activity implements TMapGpsManage
 
     @Override
     public void onLocationChange(Location location) {
-
         UserException.STATIC_CURRENT_LATITUDE = location.getLatitude();
         UserException.STATIC_CURRENT_LONGITUDE = location.getLongitude();
-
-        Log.i(TAG, "[ SearchDestinationActivity On Location Change ]");
     }   // onLocationChange
 
     @Override
