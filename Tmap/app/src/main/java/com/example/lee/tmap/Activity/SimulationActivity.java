@@ -27,6 +27,7 @@ import android.widget.Toast;
 import com.example.lee.tmap.PSoCBleService;
 import com.example.lee.tmap.R;
 import com.example.lee.tmap.UserException;
+import com.example.lee.tmap.Utils.BeyondSingleton;
 import com.example.lee.tmap.ValueObject.SimulationCoordinatesVO;
 import com.example.lee.tmap.ValueObject.SimulationVO;
 import com.skp.Tmap.TMapData;
@@ -121,17 +122,22 @@ public class SimulationActivity extends AppCompatActivity {
     static int remain_distance = 0;
 
     private static PSoCBleService mPSoCBleService;
+    private boolean isRunningPSocBleService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_simulation);
+        Log.i(TAG, "onCreate() is called.");
 
+        isRunningPSocBleService = BeyondSingleton.getInstance().getBleConnectedStatus();
 
-        Log.i(TAG, "[ Simulation Activity OnCreate ]");
+        Log.i(TAG, "isServiceRunningCheck : " + isRunningPSocBleService);
 
-        isServiceRunningCheck();
-        mPSoCBleService = new PSoCBleService();
+        if(isRunningPSocBleService){
+            mPSoCBleService = new PSoCBleService();
+            Log.i(TAG, "mPSoCBleService create in SimulationActivity onCreate");
+        }
 
         // [ User Exception ]
         exception = new UserException();
@@ -183,8 +189,8 @@ public class SimulationActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Toast.makeText(getApplicationContext(), "모의주행을 종료합니다.", Toast.LENGTH_LONG).show();
-                startActivity(new Intent(SimulationActivity.this, MainActivity.class));
-                overridePendingTransition(R.anim.anim_slide_fade_in, R.anim.anim_slide_out_left);
+//                startActivity(new Intent(SimulationActivity.this, MainActivity.class));
+//                overridePendingTransition(R.anim.anim_slide_fade_in, R.anim.anim_slide_out_left);
                 threadFlag = false;
                 finish();
             }
@@ -585,6 +591,8 @@ public class SimulationActivity extends AppCompatActivity {
                             simul_destination_latitude = info_list.get(simul_info_index).getLatitude();
                             simul_destination_longitude = info_list.get(simul_info_index).getLongitude();
 
+                            simul_before_turnType = simul_turnType;
+
                             simul_direction_check = false;            // [ 계속해서 다음 방향을 알기위한 지점의 위도 경도값과 turnType을 알 필요가 없기 때문이다. ]
                             simul_check10 = true;
                             simul_check30 = true;
@@ -631,6 +639,8 @@ public class SimulationActivity extends AppCompatActivity {
                         else if (simul_info_distance <= 10 && simul_check10){
                             Log.i(TAG, "============================== [ SImulation ] ==============================");
                             Log.i(TAG, "다음 Coordinates까지의 거리가 10m 이내입니다. ");
+                            Log.i(TAG, "simul_before_turnType: " + simul_before_turnType);
+
                             simul_check10 = false;
                             updateTurnType(simul_before_turnType);      // 10m 방향알림
                         }
@@ -715,24 +725,17 @@ public class SimulationActivity extends AppCompatActivity {
             case 12:
                 img_direction.setImageResource(R.drawable.direction_12);
                 Log.i(TAG, "[ Direction 012 ] : 좌회전입니다. ");
-                mPSoCBleService.writeDirectionCharacteristic(1);
-
                 break;
 //            case 2:
             case 13:
                 img_direction.setImageResource(R.drawable.direction_13);
-                this.firmwareConnection(2);
                 Log.i(TAG, "[ Direction 013 ] : 우회전입니다. ");
-                mPSoCBleService.writeDirectionCharacteristic(2);
 
                 break;
 //            case 3:
             case 14:
                 img_direction.setImageResource(R.drawable.direction_14);
-                this.firmwareConnection(3);
                 Log.i(TAG, "[ Direction 014 ] : 유턴입니다. ");
-                mPSoCBleService.writeDirectionCharacteristic(3);
-
                 break;
         }
 
@@ -776,15 +779,27 @@ public class SimulationActivity extends AppCompatActivity {
                 break;
             case 12:
                 this.firmwareConnection(1);
+                if(isRunningPSocBleService){
+                    mPSoCBleService.writeDirectionCharacteristic(1);
+                }
                 break;
             case 13:
                 this.firmwareConnection(2);
+                if(isRunningPSocBleService){
+                    mPSoCBleService.writeDirectionCharacteristic(2);
+                }
                 break;
             case 14:
                 this.firmwareConnection(3);
+                if(isRunningPSocBleService){
+                    mPSoCBleService.writeDirectionCharacteristic(3);
+                }
                 break;
             case 9:
                 this.firmwareConnection(9);
+                if(isRunningPSocBleService){
+                    mPSoCBleService.writeDirectionCharacteristic(9);
+                }
                 Log.i(TAG, "[ Cancel Notification ] ");
                 break;
         }
@@ -863,16 +878,24 @@ public class SimulationActivity extends AppCompatActivity {
         remain_distance = 0;
     }
 
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        Log.i(TAG, "onBackPressed() is called.");
+        thread.interrupt();
+        threadFlag = false;
+    }
 
     @Override
     protected void onStart() {
         super.onStart();
+        Log.i(TAG, "onStart() is called.");
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        Log.i(TAG, "[ Simulation Activity onResume ]");
+        Log.i(TAG, "onResume() is called.");
         tmapview.setCenterPoint(startPoint.getLongitude(), startPoint.getLatitude(), true);         // [ 현재 위치로 가기 ]
         threadFlag = true;
     }
@@ -880,17 +903,20 @@ public class SimulationActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        Log.i(TAG, "onPause() is called.");
         // GPS중단
     }
 
     @Override
     protected void onStop() {
         super.onStop();
+        Log.i(TAG, "onStop() is called.");
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        Log.i(TAG, "onDestroy() is called.");
         // Thread 종료
         thread.interrupt();
         threadFlag = false;

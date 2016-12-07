@@ -173,8 +173,8 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
             @Override
             public void onClick(View v) {
                 Toast.makeText(getApplicationContext(), "안내를 종료합니다.", Toast.LENGTH_LONG).show();
-                startActivity(new Intent(GuideActivity.this, MainActivity.class));
-                overridePendingTransition(R.anim.anim_slide_fade_in, R.anim.anim_slide_out_left);
+//                startActivity(new Intent(GuideActivity.this, MainActivity.class));
+//                overridePendingTransition(R.anim.anim_slide_fade_in, R.anim.anim_slide_out_left);
                 finish();
             }
         }); // [ 안내종료 버튼 ]

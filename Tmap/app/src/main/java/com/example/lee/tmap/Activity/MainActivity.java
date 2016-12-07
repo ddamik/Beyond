@@ -1,10 +1,6 @@
 package com.example.lee.tmap.Activity;
 
 
-import android.content.Context;
-import android.content.Intent;
-import android.location.Location;
-
 import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -13,12 +9,14 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Build;
-
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
@@ -35,22 +33,21 @@ import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 
 import com.example.lee.tmap.Fragment.ArrivalPathListFragment;
 import com.example.lee.tmap.Fragment.HomeFragment;
 import com.example.lee.tmap.PSoCBleService;
 import com.example.lee.tmap.R;
 import com.example.lee.tmap.UserException;
-
+import com.example.lee.tmap.Utils.BackPressCloseHandler;
+import com.example.lee.tmap.Utils.BeyondSingleton;
+import com.example.lee.tmap.View.ClearEditText;
 import com.skp.Tmap.TMapGpsManager;
-
-import java.util.UUID;
-
 
 import java.util.Timer;
 import java.util.TimerTask;
-
-
+import java.util.UUID;
 
 
 public class MainActivity extends AppCompatActivity implements TMapGpsManager.onLocationChangedCallback {
@@ -83,7 +80,13 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
 
     private Toolbar toolbar;
 
+    private ClearEditText et_destination;
+
+    private InputMethodManager imm;
+
     private NavigationView navigationView;
+
+    private BackPressCloseHandler backPressCloseHandler;
 
     private ActionBarDrawerToggle toggle;
 
@@ -108,6 +111,7 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
             mPSoCBleService = ((PSoCBleService.LocalBinder) service).getService();
             mServiceConnected = true;
             mPSoCBleService.initialize();
+            BeyondSingleton.getInstance().setBleConnectedStatus(true);
         }
 
         /**
@@ -119,6 +123,7 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
         public void onServiceDisconnected(ComponentName componentName) {
             Log.i(TAG, "onServiceDisconnected");
             mPSoCBleService = null;
+            BeyondSingleton.getInstance().setBleConnectedStatus(false);
         }
     };
 
@@ -138,24 +143,23 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
         String strUUID = this.GetDevicesUUID(this);
         Log.i(TAG, "[ String UUID ] : " + strUUID);
 
-        String prefKey = getResources().getString(R.string.pref_key);
-        String getBlePrefKey = getResources().getString(R.string.ble_pref_key);
-        String getStringBleOff = getResources().getString(R.string.ble_off);
-
-//        pref = getSharedPreferences(prefKey, MODE_PRIVATE);
-//        editor = pref.edit();
-//        editor.putString(getBlePrefKey, getStringBleOff);
-//        editor.commit();
-        Log.i(TAG, "mConnectState: " + mConnectState);
-
         //Add toolbar
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.setTitle("");
         setSupportActionBar(toolbar);
+        et_destination = (ClearEditText) toolbar.findViewById(R.id.et_destination);
+        imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction().add(R.id.fragment, new HomeFragment()).commit();
         }
+
+        //set backPressCloseHandler
+        backPressCloseHandler = new BackPressCloseHandler(this);
+
+        //Initialize singleton
+        BeyondSingleton.initializeInstance(getApplicationContext());
+        BeyondSingleton.getInstance().setBleConnectedStatus(false);
 
         // Initialize service and connection state variable
 //        mServiceConnected = false;
@@ -186,12 +190,21 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
             public void onDrawerClosed(View view) {
                 super.onDrawerClosed(view);
                 Log.i(TAG, "onDrawerClosed is called");
+
+                Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.fragment);
+                if (currentFragment.getClass().getName().equals(HomeFragment.class.getName())) {
+                    Fragment fragment = null;
+                    final FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+                    fragment = new HomeFragment();
+                    ft.replace(R.id.fragment, fragment).commit();
+                }
             }
 
             /** Called when a drawer has settled in a completely open state. */
             public void onDrawerOpened(View drawerView) {
                 super.onDrawerOpened(drawerView);
                 Log.i(TAG, "onDrawerOpened is called");
+                imm.hideSoftInputFromWindow(et_destination.getWindowToken(), 0);
             }
         };
         mDrawerLayout.addDrawerListener(toggle);
@@ -202,7 +215,6 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
 
 
     }   // onCreate
-
 
 
     // When drawerLayout is activated, fragment can be replaced.
@@ -252,10 +264,10 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
                 fm = getSupportFragmentManager();
                 arrivalPathListFragment = (ArrivalPathListFragment) fm.findFragmentById(R.id.fragment);
                 arrivalPathListFragment.removeDestinationTextChangedListener();// remove textWatcher
-
-
                 fragment = new HomeFragment();
                 ft.replace(R.id.fragment, fragment).commit();
+                imm.hideSoftInputFromWindow(et_destination.getWindowToken(), 0);
+
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -324,6 +336,17 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
         }
 
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    @Override
+    public void onBackPressed() {
+        // When drawerLayout is activated, use the back button to call closeDrawer().
+        if (mDrawerLayout != null && mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
+            mDrawerLayout.closeDrawer(GravityCompat.START);
+        } else {
+//            super.onBackPressed();
+            backPressCloseHandler.onBackPressed();
+        }
     }
 
     @Override
@@ -447,8 +470,6 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
             switch (action) {
                 case PSoCBleService.ACTION_BLESCAN_CALLBACK:
                     // Disable the search button and enable the connect button
-                    /*search_button.setEnabled(false);
-                    connect_button.setEnabled(true);*/
                     connectBluetooth();
                     break;
 
@@ -456,14 +477,10 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
                     /* This if statement is needed because we sometimes get a GATT_CONNECTED */
                     /* action when sending Capsense notifications */
                     if (!mConnectState) {
-                        // Dsable the connect button, enable the discover services and disconnect buttons
-                     /*   connect_button.setEnabled(false);
-                        discover_button.setEnabled(true);
-                        disconnect_button.setEnabled(true);*/
+
                         mConnectState = true;
+                        BeyondSingleton.getInstance().setBleConnectedStatus(true);
                         Log.d(TAG, "Connected to Device");
-
-
                         discoverServices();
                     }
                     break;
@@ -473,12 +490,9 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
                     break;
                 case PSoCBleService.ACTION_SERVICES_DISCOVERED:
                     Log.d(TAG, "Services Discovered");
-
-
                     fm = getSupportFragmentManager();
                     fragment = (HomeFragment) fm.findFragmentById(R.id.fragment);
                     fragment.updateBluetoothConnectedView();// 페어링 완료 메시지 표시하는 UI 메서드
-
                     break;
                 case PSoCBleService.ACTION_DATA_RECEIVED:
                     // This is called after a notify or a read completes

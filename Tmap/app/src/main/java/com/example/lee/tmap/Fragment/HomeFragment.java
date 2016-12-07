@@ -1,14 +1,10 @@
 package com.example.lee.tmap.Fragment;
 
 import android.app.ProgressDialog;
-import android.content.Context;
-import android.content.Intent;
-import android.location.Location;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.IntentFilter;
-
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -30,19 +26,17 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.lee.tmap.Activity.PathInfoActivity;
-
 import com.example.lee.tmap.Activity.MainActivity;
-
+import com.example.lee.tmap.Activity.PathInfoActivity;
 import com.example.lee.tmap.Adapter.GridViewAdapter;
 import com.example.lee.tmap.ApiService;
 import com.example.lee.tmap.PSoCBleService;
 import com.example.lee.tmap.R;
 import com.example.lee.tmap.UserException;
+import com.example.lee.tmap.Utils.BeyondSingleton;
 import com.example.lee.tmap.ValueObject.RecentPathListVO;
 import com.example.lee.tmap.ValueObject.RecentPathVO;
 import com.example.lee.tmap.View.ClearEditText;
-
 import com.wang.avi.AVLoadingIndicatorView;
 
 import java.util.ArrayList;
@@ -128,11 +122,6 @@ public class HomeFragment extends Fragment {
         mobile = manager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
         wifi = manager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
         mPSoCBleService = new PSoCBleService();
-
-        String prefKey = getResources().getString(R.string.pref_key);
-
-    /*    pref = getActivity().getSharedPreferences(prefKey, getActivity().MODE_PRIVATE);
-        editor = pref.edit();*/
 
 
         watchImageView.setImageResource(R.drawable.ic_scan);
@@ -297,6 +286,7 @@ public class HomeFragment extends Fragment {
                         Log.i(TAG, "[ Destination Latitude ]: " + destination_latitude);
 
                         Intent intent = new Intent(getActivity(), PathInfoActivity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
                         intent.putExtra("arrival_name", strArrivalName);
                         intent.putExtra("des_longitude", destination_longitude);
                         intent.putExtra("des_latitude", destination_latitude);
@@ -331,20 +321,14 @@ public class HomeFragment extends Fragment {
             if (hasFocus) {
                 Log.i(TAG, "lost the focus");
 
-                String getBlePrefKey = getResources().getString(R.string.ble_pref_key);
-                String getStringInit = getResources().getString(R.string.ble_init);
-                String getStringBleOn = getResources().getString(R.string.ble_on);
-/*
-                String bleStatus = pref.getString(getBlePrefKey, getStringInit);
-*/
-
 
                 if (wifi.isConnected() || mobile.isConnected()) {
                     Log.i(TAG, "[ 인터넷 연결이 완료됨. ] ");
-//                    if(bleStatus.equals(getStringBleOn)){
+                    if(!BeyondSingleton.getInstance().getBleConnectedStatus()){
+                        Toast.makeText(getActivity(), "[ Beyond 제품과 미연동 ] ", Toast.LENGTH_LONG).show();
+                    }
                     ArrivalPathListFragment fragment = new ArrivalPathListFragment();
                     getActivity().getSupportFragmentManager().beginTransaction().replace(R.id.fragment, fragment).commit();
-
 
                 } else {
                     Log.i(TAG, "[ 인터넷 연결이 필요함. ] ");
@@ -410,7 +394,6 @@ public class HomeFragment extends Fragment {
         et_destination.setOnFocusChangeListener(editTextOnFocusChangeListener);
         et_destination.clearFocus();
         bleWaveView.show();
-
 
         if (((MainActivity) getActivity()).mConnectState) {
             updateBluetoothConnectedView();// 페어링 완료 메시지 표시하는 UI 메서드
