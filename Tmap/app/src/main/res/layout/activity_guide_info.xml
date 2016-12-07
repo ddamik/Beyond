@@ -100,14 +100,22 @@
             android:text="14:05 도착예정"
             android:gravity="center"/>
 
-        <ImageButton
+
+        <Button
             android:layout_gravity="center"
             android:id="@+id/img_btn_exit"
+            android:layout_margin="5dp"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:background="@android:color/transparent"
             android:layout_weight="2.5"
-            android:src="@drawable/btn_exit"/>
+            android:gravity="center"
+            android:textColor="@color/white"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:fontFamily="sans-serif-light"
+            android:text="안내종료"
+            android:background="@color/app_primary" />
+
     </LinearLayout>
     <!-- [ End Bottom ] -->
 </LinearLayout>

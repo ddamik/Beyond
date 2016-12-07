@@ -1,6 +1,7 @@
 package com.example.lee.tmap.Activity;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -15,6 +16,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -22,12 +24,11 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.lee.tmap.ApiService;
+import com.example.lee.tmap.PSoCBleService;
 import com.example.lee.tmap.R;
 import com.example.lee.tmap.UserException;
 import com.example.lee.tmap.ValueObject.SimulationCoordinatesVO;
 import com.example.lee.tmap.ValueObject.SimulationVO;
-import com.example.lee.tmap.ValueObject.TmapDataVO;
 import com.skp.Tmap.TMapData;
 import com.skp.Tmap.TMapMarkerItem;
 import com.skp.Tmap.TMapPoint;
@@ -35,14 +36,6 @@ import com.skp.Tmap.TMapPolyLine;
 import com.skp.Tmap.TMapView;
 
 import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
-
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.GsonConverterFactory;
-import retrofit2.Response;
-import retrofit2.Retrofit;
 
 
 /**
@@ -51,6 +44,7 @@ import retrofit2.Retrofit;
 public class SimulationActivity extends AppCompatActivity {
 
     public static final String TAG = "SimulationActivity";
+    private final static String SIMULATION_FINISH_BROADCAST_RECEIVER = "simulationFinishBroadcastReceiver";
 
     // [ Map ]
     public static final String APP_KEY = "483f055b-19f2-3a22-a3fb-935bc1684b0b";
@@ -71,7 +65,8 @@ public class SimulationActivity extends AppCompatActivity {
 
     // [ 겹친 layout 정보 표시 ]
     ImageView img_direction;
-    ImageButton img_btn_currentPoint, img_btn_exit;
+    ImageButton img_btn_currentPoint;
+    Button img_btn_exit;
     TextView tv_distance, tv_remain_distance, tv_arriaval_time;
     public UserException exception;
 
@@ -125,10 +120,17 @@ public class SimulationActivity extends AppCompatActivity {
 
     static int remain_distance = 0;
 
+    private static PSoCBleService mPSoCBleService;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_simulation);
+
+        isServiceRunningCheck();
+        mPSoCBleService = new PSoCBleService();
+
+
 
         // [ User Exception ]
         exception = new UserException();
@@ -144,7 +146,7 @@ public class SimulationActivity extends AppCompatActivity {
         // 겹친 layout 정보
         img_direction = (ImageView) findViewById(R.id.img_direction);                       // 방향 이미지 ( 좌, 우, 유턴 )
         img_btn_currentPoint = (ImageButton) findViewById(R.id.img_btn_currentPoint);       // 현재위치로 가는 버튼
-        img_btn_exit = (ImageButton) findViewById(R.id.img_btn_exit);                       // 안내종료
+        img_btn_exit = (Button) findViewById(R.id.img_btn_exit);                       // 안내종료
         tv_distance = (TextView) findViewById(R.id.tv_distance);                            // 다음 안내지점까지의 거리
         tv_remain_distance = (TextView) findViewById(R.id.tv_remain_distance);              // 총 남은 거리
         tv_arriaval_time = (TextView) findViewById(R.id.tv_arrival_time);                   // 도착 예상시간
@@ -188,6 +190,9 @@ public class SimulationActivity extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(), "모의주행을 종료합니다.", Toast.LENGTH_LONG).show();
                 startActivity(new Intent(SimulationActivity.this, MainActivity.class));
                 overridePendingTransition(R.anim.anim_slide_fade_in, R.anim.anim_slide_out_left);
+
+           /*     Intent intent = new Intent(SIMULATION_FINISH_BROADCAST_RECEIVER);
+                sendBroadcast(intent);*/
 
                 threadFlag = false;
                 finish();
@@ -694,6 +699,18 @@ public class SimulationActivity extends AppCompatActivity {
         tv_arriaval_time.setText(arrival_time);                 // 도착 예상시간
     }   // [ End Set Text Info ]
 
+
+    public boolean isServiceRunningCheck() {
+        ActivityManager manager = (ActivityManager) this.getSystemService(Activity.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if ("com.example.lee.tmap.PSoCBleService".equals(service.service.getClassName())) {
+                Log.d(TAG, "isServiceRunningCheck");
+                return true;
+            }
+        }
+        return false;
+    }
+
     // [ Direction 이미지 변경 ]
     public void changeDirectionImg(int turnType){
         Log.i(TAG, "[ 방향전환이 이뤄졌습니다. TurnType은 : " + turnType + " 입니다. ] ");
@@ -706,23 +723,34 @@ public class SimulationActivity extends AppCompatActivity {
                 img_direction.setImageResource(R.drawable.direction_201);
                 Log.i(TAG, "[ Direction 201 ] : 도착지입니다. ");
                 break;
+//            case 0:
             case 11:
                 img_direction.setImageResource(R.drawable.direction_11);
                 Log.i(TAG, "[ Direction 011 ] : 직진입니다. ");
                 break;
+//            case 1:
             case 12:
                 img_direction.setImageResource(R.drawable.direction_12);
                 Log.i(TAG, "[ Direction 012 ] : 좌회전입니다. ");
+                mPSoCBleService.writeDirectionCharacteristic(1);
+
                 break;
+//            case 2:
             case 13:
                 img_direction.setImageResource(R.drawable.direction_13);
                 Log.i(TAG, "[ Direction 013 ] : 우회전입니다. ");
+                mPSoCBleService.writeDirectionCharacteristic(2);
+
                 break;
+//            case 3:
             case 14:
                 img_direction.setImageResource(R.drawable.direction_14);
                 Log.i(TAG, "[ Direction 014 ] : 유턴입니다. ");
+                mPSoCBleService.writeDirectionCharacteristic(3);
+
                 break;
         }
+
     }   // [ End Direction 이미지 변경 ]
 
     private Handler handler = new Handler(){
