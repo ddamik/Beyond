@@ -94,6 +94,9 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
     */
     public UserException exception;
 
+    private double coordiLongitude;
+    private double coordiLatitude;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -103,6 +106,9 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
         String tmpArrival_name = intent.getStringExtra("arrival_name");
         double tmpLongitude = intent.getDoubleExtra("des_longitude", 0.0);
         double tmpLatitude = intent.getDoubleExtra("des_latitude", 0.0);
+        int totalTime = intent.getIntExtra("totalTime", 0);
+        int totalDistance = intent.getIntExtra("totalDistance", 0);
+
 
         // User Exception ( [ 도착시간 & 소요시간 & 통행요금 & 거리 스트링 변환 ] )
         exception = new UserException();
@@ -132,6 +138,7 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
         initLocation(tmpLongitude, tmpLatitude, tmpArrival_name);                 // 시작할때의 현재위치를 가져온다. TMap은 Point 기준이기때문에 위도와 경도를 Point로 셋팅.
         initGPS();                      // GPS ghkftjdghk
         initMapView();                  // 지도 초기화
+        initInfo(totalDistance, totalTime);
 
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inSampleSize = 2;
@@ -179,6 +186,18 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
         uiThread.start();
 
    }   //onCreate
+
+    // Text Setting
+    public void initInfo(int totalDistance, int totalTime){
+
+        String arrival_time = exception.strArrival_time(totalTime);
+        String strRemain = exception.strRemainDistance(totalDistance, totalDistance);
+
+        tv_distance = (TextView) findViewById(R.id.tv_distance);                            // 다음 안내지점까지의 거리
+        tv_remain_distance.setText(strRemain);                // 총 남은 거리
+        tv_arriaval_time.setText(arrival_time);                 // 도착 예상시간
+    }
+
 
     // 지도 셋팅
     public void initMapView() {
@@ -270,6 +289,7 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
         ApiService apiService = client.create(ApiService.class);
         Call<GuideDataVO> call = apiService.getGuidePathResult(endX, endY, reqCoordType, startX, startY);
         call.enqueue(new Callback<GuideDataVO>() {
+
             @Override
             public void onResponse(Call<GuideDataVO> call, Response<GuideDataVO> response) {
                 if (response.isSuccessful()) {
@@ -278,26 +298,15 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
                     for (int i = 0; i < length; i++) {
                         Log.i(TAG, "==================== [ GuideActivity Car Path " + i + " ]====================");
                         if (i == 0) {
-                            Log.i(TAG, "[ Car Path ] Total Distance : " + response.body().getFeatures().get(i).getProperties().getTotalDistance());
-                            Log.i(TAG, "[ Car Path ] Total Time : " + response.body().getFeatures().get(i).getProperties().getTotalTime());
-                            Log.i(TAG, "[ Car Path ] Total Fare : " + response.body().getFeatures().get(i).getProperties().getTotalFare());
-                            Log.i(TAG, "[ Car Path ] Total TaxiFare : " + response.body().getFeatures().get(i).getProperties().getTaxiFare());
-
-                            int totalTime = response.body().getFeatures().get(i).getProperties().getTotalTime();
-                            int totalDistance = response.body().getFeatures().get(i).getProperties().getTotalDistance();
-                            String arrival_time = exception.strArrival_time(totalTime);
-                            String strRemain = exception.strRemainDistance(totalDistance, totalDistance);
-
-                            tv_remain_distance.setText(strRemain);                // 총 남은 거리
-                            tv_arriaval_time.setText(arrival_time);                 // 도착 예상시간
+                            //
                         }
+
                         Log.i(TAG, "[ Car Path ] Distance : " + response.body().getFeatures().get(i).getProperties().getDistance());
                         Log.i(TAG, "[ Car Path ] Description : " + response.body().getFeatures().get(i).getProperties().getDescription());
                         Log.i(TAG, "[ Car Path ] TurnType : " + response.body().getFeatures().get(i).getProperties().getTurnType());
 
-
-                        double coordiLongitude = response.body().getFeatures().get(i).getGeoMetry().getCoordinates().get(0).getLongitude();
-                        double coordiLatitude = response.body().getFeatures().get(i).getGeoMetry().getCoordinates().get(0).getLatitude();
+//                        coordiLongitude = response.body().getFeatures().get(i).getGeoMetry().getCoordinates().get(0).getLongitude();
+//                        coordiLatitude = response.body().getFeatures().get(i).getGeoMetry().getCoordinates().get(0).getLatitude();
 
                         Log.i(TAG, "[ Guide Path Coordinates ] ");
                         Log.i(TAG, "[ Longitude & Latitude ] : " + coordiLongitude + " & " + coordiLatitude);
@@ -307,7 +316,9 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
 
             @Override
             public void onFailure(Call<GuideDataVO> call, Throwable t) {
-
+                Log.i(TAG, "[ GuideActivity ] onFailure");
+                Log.i(TAG, "========================= [ onFailure ] : " + call.toString() + "=========================");
+                Log.i(TAG, "========================= [ onFailure ] : " + t.toString() + "=========================");
             }
         }); // call.enqueue
     }   // getPathInfo

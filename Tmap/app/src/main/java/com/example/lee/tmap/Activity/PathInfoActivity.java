@@ -93,7 +93,9 @@ public class PathInfoActivity extends AppCompatActivity {
      */
     public UserException exception;
 
-
+    private int totalTime;
+    private int total_fare;
+    private int total_distance;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -151,6 +153,8 @@ public class PathInfoActivity extends AppCompatActivity {
                 intent.putExtra("des_latitude", des_latitude);
                 intent.putExtra("des_longitude", des_longitude);
                 intent.putExtra("arrival_name", tmpArrival_name);
+                intent.putExtra("totalTime", totalTime);
+                intent.putExtra("totalDistance", total_distance);
                 startActivity(intent);
                 finish();
             }
@@ -282,9 +286,9 @@ public class PathInfoActivity extends AppCompatActivity {
                             Log.i(TAG, "[ Car Path ] Total Fare : " + response.body().getFeatures().get(i).getProperties().getTotalFare());
                             Log.i(TAG, "[ Car Path ] Total TaxiFare : " + response.body().getFeatures().get(i).getProperties().getTaxiFare());
 
-                            int totalTime = response.body().getFeatures().get(i).getProperties().getTotalTime();
-                            int total_fare = response.body().getFeatures().get(i).getProperties().getTotalFare();
-                            int total_distance = response.body().getFeatures().get(i).getProperties().getTotalDistance();
+                            totalTime = response.body().getFeatures().get(i).getProperties().getTotalTime();
+                            total_fare = response.body().getFeatures().get(i).getProperties().getTotalFare();
+                            total_distance = response.body().getFeatures().get(i).getProperties().getTotalDistance();
 
                             // [ 거리 & 시간 & 통행요금 ] 셋팅 완료
                             tv_arrival_time.setText(exception.strArrival_time(totalTime));        // Calendar에 초를 더함.

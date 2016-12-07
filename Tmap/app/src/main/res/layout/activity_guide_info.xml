@@ -32,7 +32,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:gravity="center"
-            android:text="1.4km"
+            android:text="80m"
             android:textColor="@color/tmap_font_color"
             android:textSize="36dp"
             android:textStyle="bold"
