@@ -6,6 +6,7 @@ import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -82,6 +83,8 @@ public class SearchDestinationActivity extends AppCompatActivity implements TMap
     private Handler mHandler;
     private ProgressDialog mProgressDialog;
 
+    private Thread thread;
+    public static boolean onItemFlag = true;
 
     /*=========
         현재 위치를 항상 최신화 하기 위해서 --> 따로빼서 관리를 할 수 없을까?
@@ -169,19 +172,15 @@ public class SearchDestinationActivity extends AppCompatActivity implements TMap
                          /*
                             UI 변환
                          */
-                        new Thread(new Runnable() {
+                        thread = new Thread() {
                             @Override
                             public void run() {
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        autoCheck = true;
-                                        adapter.notifyDataSetChanged();
-                                        // 해당 작업을 처리함
-                                    }
-                                });
+                                while(onItemFlag) {
+                                    uiHandler.sendEmptyMessage(0);
+                                }
                             }
-                        }).start();
+                        };
+                        thread.start();
                     }   // onAutoComplete
                 }); // tMapData.autoComplete
             }
@@ -207,39 +206,20 @@ public class SearchDestinationActivity extends AppCompatActivity implements TMap
             public void onClick(View v) {
                 String search = edit_destination.getText().toString();
                 selectDestination(search);
-                                         /*
-                            UI 변환
-                         */
-                new Thread(new Runnable() {
+                 /*
+                    UI 변환
+                 */
+                thread = new Thread() {
                     @Override
                     public void run() {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                autoCheck = true;
-                                adapter.notifyDataSetChanged();
-                                // 해당 작업을 처리함
-                            }
-                        });
+                        while(onItemFlag) {
+                            uiHandler.sendEmptyMessage(0);
+                        }
                     }
-                }).start();
-
+                };
+                thread.start();
             }   // [ End onClick ]
         });
-
-//        // 경로안내 지도보기
-//        btn_viewmap = (Button) findViewById(R.id.btn_viewmap);
-//        btn_viewmap.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                Intent intent = new Intent(SearchDestinationActivity.this, PathInfoActivity.class);
-//                intent.putExtra("des_longitude", des_longitude);
-//                intent.putExtra("des_latitude", des_latitude);
-//                intent.putExtra("arrival_name", des_name);
-//                startActivity(intent);
-//                overridePendingTransition(R.anim.anim_slide_fade_in, R.anim.anim_slide_out_left);
-//            }
-//        });
 
         // 뒤로가기 버튼
         btn_back = (Button) findViewById(R.id.btn_back);
@@ -248,11 +228,20 @@ public class SearchDestinationActivity extends AppCompatActivity implements TMap
             public void onClick(View v) {
                 startActivity(new Intent(SearchDestinationActivity.this, MainActivity.class));                     // 우측으로 사라지기
                 overridePendingTransition(R.anim.anim_slide_in_left, R.anim.anim_slide_out_right);
+                onItemFlag = false;
                 finish();
             }
         });
     }   // onCreate
 
+    private Handler uiHandler  = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            //
+            autoCheck = true;
+            adapter.notifyDataSetChanged();
+        }
+    };   // [ End directionHandler ]
 
     public void selectDestination(String searchName) {
         String destination = "";
@@ -378,6 +367,8 @@ public class SearchDestinationActivity extends AppCompatActivity implements TMap
 
     @Override
     public void onLocationChange(Location location) {
+        Log.i(TAG, "[ SearchDestinatino User Exception Location ]");
+        Log.i(TAG, "[ Longitude & Latitude ] : " + UserException.STATIC_CURRENT_LONGITUDE + " & " + UserException.STATIC_CURRENT_LATITUDE);
         UserException.STATIC_CURRENT_LATITUDE = location.getLatitude();
         UserException.STATIC_CURRENT_LONGITUDE = location.getLongitude();
     }   // onLocationChange

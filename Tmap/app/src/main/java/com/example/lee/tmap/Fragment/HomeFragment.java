@@ -3,6 +3,7 @@ package com.example.lee.tmap.Fragment;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -48,6 +49,8 @@ import retrofit2.Retrofit;
  */
 public class HomeFragment extends Fragment {
     private final static String TAG = HomeFragment.class.getSimpleName();
+
+
 
     private GridView gridView;
 
@@ -206,6 +209,7 @@ public class HomeFragment extends Fragment {
 
 
 
+
     private class ProgressAsync extends AsyncTask<Void, Void, Void> {
 
         ProgressDialog progressDialog = new ProgressDialog(getActivity());
@@ -221,7 +225,7 @@ public class HomeFragment extends Fragment {
 
         @Override
         protected Void doInBackground(Void... params) {
-            Log.i(TAG, "[ Do In Background ] ");
+
             while(true){
                 if( UserException.STATIC_CURRENT_LONGITUDE == 0 || UserException.STATIC_CURRENT_LATITUDE == 0 ) {
                     continue;
@@ -291,7 +295,9 @@ public class HomeFragment extends Fragment {
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
             if(position < recentArrivalNameListLength){
-                recentPathClicked(recentPathList[position]);
+                    if( UserException.STATIC_CURRENT_LONGITUDE == 0 || UserException.STATIC_CURRENT_LATITUDE == 0 )
+                        Toast.makeText(getActivity(), "[ GPS 활성화 중입니다. ]", Toast.LENGTH_LONG).show();
+                    else                recentPathClicked(recentPathList[position]);
             }
         }
     };
@@ -325,6 +331,5 @@ public class HomeFragment extends Fragment {
         Log.i(TAG, "onResume() is called.");
         super.onResume();
         bleWaveView.show();
-
     }
 }

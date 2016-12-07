@@ -35,14 +35,7 @@ import com.skp.Tmap.TMapPolyLine;
 import com.skp.Tmap.TMapView;
 
 import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.GsonConverterFactory;
-import retrofit2.Response;
-import retrofit2.Retrofit;
 
 
 /**
@@ -116,6 +109,7 @@ public class SimulationActivity extends AppCompatActivity {
     static double simul_gap_latitude = 0.0;
     static double simul_gap_longitude = 0.0;
     static int simul_turnType = 0;
+    static int simul_before_turnType = 0;
 
     static int current_distance = 0;
     static String strCurrentDistance = "";
@@ -130,6 +124,7 @@ public class SimulationActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_simulation);
 
+        Log.i(TAG, "[ Simulation Activity OnCreate ]");
         // [ User Exception ]
         exception = new UserException();
 
@@ -150,6 +145,7 @@ public class SimulationActivity extends AppCompatActivity {
         tv_arriaval_time = (TextView) findViewById(R.id.tv_arrival_time);                   // 도착 예상시간
 
         tMapData = new TMapData();
+        initSimulation();
         setInitLocation();
         initMapView();                  // 지도 초기화
         setGPSValue();                  // [ 시뮬레이션 GPS 값 설정 ]
@@ -165,7 +161,6 @@ public class SimulationActivity extends AppCompatActivity {
                 tmapview.addTMapPath(tMapPolyLine);             // 지도에 추가
             }
         });
-        tmapview.setCenterPoint(startPoint.getLongitude(), startPoint.getLatitude(), true);         // [ 현재 위치로 가기 ]
 
         // [ Simulation ]
         BitmapFactory.Options options = new BitmapFactory.Options();
@@ -182,7 +177,6 @@ public class SimulationActivity extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(), "모의주행을 종료합니다.", Toast.LENGTH_LONG).show();
                 startActivity(new Intent(SimulationActivity.this, MainActivity.class));
                 overridePendingTransition(R.anim.anim_slide_fade_in, R.anim.anim_slide_out_left);
-
                 threadFlag = false;
                 finish();
             }
@@ -203,6 +197,7 @@ public class SimulationActivity extends AppCompatActivity {
     // [ StartPoint & EndPoint 설정 ]
     public void setInitLocation(){
 
+        Log.i(TAG, " [ Simulation Location Set Init Location ]");
         // [ 세종대학교 학술정보원 ]
         double sejong_latitude = 37.551251;
         double sejong_longitude = 127.073887;
@@ -230,6 +225,8 @@ public class SimulationActivity extends AppCompatActivity {
     // 지도 셋팅
     public void initMapView() {
 
+        Log.i(TAG, " [ Simulation Activity Init Map View ]");
+
         tMapLayout = (RelativeLayout) findViewById(R.id.simulation_tmap);
         tmapview = new TMapView(this);
         tmapview.setSKPMapApiKey(APP_KEY);
@@ -246,7 +243,7 @@ public class SimulationActivity extends AppCompatActivity {
 
     // [ SimulationCoordinates 위도 & 경도 설정 ]
     public void setGPSValue(){
-
+        Log.i(TAG, " [ Simulation Activity Set GPS Value ]");
         SimulationCoordinatesVO vo;
 
         // latitude & longitude;
@@ -334,6 +331,7 @@ public class SimulationActivity extends AppCompatActivity {
 
     // [ 경로 가는곳마다 방향 설정 ]
     public void setPathInfo(){
+        Log.i(TAG, " [ Simulation Activity Set Path Info ]");
         /*
                 public int index;
                 public int totalDistance;
@@ -484,6 +482,7 @@ public class SimulationActivity extends AppCompatActivity {
     }   // [ End Set Path Info ]
 
     public void simulation(){
+        Log.i(TAG, " [ Simulation Activity Simulation ]");
         /*
             [ 1. 짝수 ]
                 turnType
@@ -514,6 +513,7 @@ public class SimulationActivity extends AppCompatActivity {
         Log.i(TAG, "모의주행을 시작합니다.");
 //        img_direction.setImageResource(R.drawable.direction_11);
         simul_info_index += 2;
+        simul_before_turnType = simul_turnType;
         simul_turnType = info_list.get(simul_info_index).getTurnType();
 
         simul_coordinates_index++;
@@ -620,13 +620,16 @@ public class SimulationActivity extends AppCompatActivity {
                             simul_check50 = false;
                         else if (simul_info_distance <= 30 && simul_info_distance > 10 && simul_check30)
                             simul_check30 = false;
-                        else if (simul_info_distance <= 10 && simul_check10)
+                        else if (simul_info_distance <= 10 && simul_check10){
+                            Log.i(TAG, "============================== [ SImulation ] ==============================");
+                            Log.i(TAG, "다음 Coordinates까지의 거리가 10m 이내입니다. ");
                             simul_check10 = false;
+                            updateTurnType(simul_before_turnType);      // 10m 방향알림
+                        }
+
 
                         // [ 다음 GPS 정보까지의 거리가 COORDINATES_DISTANCE보다 적을 때 ]
                         if (simul_coordi_distance < COORDINATES_DISTANCE) {
-                            Log.i(TAG, "============================== [ SImulation ] ==============================");
-                            Log.i(TAG, "다음 Coordinates까지의 거리가 2m 이내입니다. ");
 
                             // [ 방향 전환 경도 위도와 다음 GPS의 경도 위도가 같으면 방향 전환을 해야할 때이다. ]
                             if (simul_next_latitude == simul_destination_latitude && simul_next_longitude == simul_destination_longitude) {
@@ -671,28 +674,24 @@ public class SimulationActivity extends AppCompatActivity {
     }   // [ End Set Text Info ]
 
     // [ Direction 이미지 변경 ]
-    public void changeDirectionImg(int turnType){
+    public void changeDirectionImg(int simul_before_turnType, int turnType){
         Log.i(TAG, "[ 방향전환이 이뤄졌습니다. TurnType은 : " + turnType + " 입니다. ] ");
-
+        this.updateTurnType(9);
         switch (turnType){
             case 200:
                 img_direction.setImageResource(R.drawable.direction_200);
-                this.firmwareConnection(4);
                 Log.i(TAG, "[ Direction 200 ] : 출발지입니다. ");
                 break;
             case 201:
                 img_direction.setImageResource(R.drawable.direction_201);
-                this.firmwareConnection(5);
                 Log.i(TAG, "[ Direction 201 ] : 도착지입니다. ");
                 break;
             case 11:
                 img_direction.setImageResource(R.drawable.direction_11);
-                this.firmwareConnection(0);
                 Log.i(TAG, "[ Direction 011 ] : 직진입니다. ");
                 break;
             case 12:
                 img_direction.setImageResource(R.drawable.direction_12);
-                this.firmwareConnection(1);
                 Log.i(TAG, "[ Direction 012 ] : 좌회전입니다. ");
                 break;
             case 13:
@@ -729,9 +728,36 @@ public class SimulationActivity extends AppCompatActivity {
     private Handler directionHandler = new Handler(){
         @Override
         public void handleMessage(Message msg) {
-            changeDirectionImg(simul_turnType);
+            changeDirectionImg(simul_before_turnType, simul_turnType);
         }
     };   // [ End directionHandler ]
+
+    public void updateTurnType(int beforeTurnType){
+        switch (beforeTurnType){
+            case 200:
+                this.firmwareConnection(4);
+                break;
+            case 201:
+                this.firmwareConnection(5);
+                break;
+            case 11:
+                this.firmwareConnection(0);
+                break;
+            case 12:
+                this.firmwareConnection(1);
+                break;
+            case 13:
+                this.firmwareConnection(2);
+                break;
+            case 14:
+                this.firmwareConnection(3);
+                break;
+            case 9:
+                this.firmwareConnection(9);
+                Log.i(TAG, "[ Cancel Notification ] ");
+                break;
+        }
+    }
 
     public void firmwareConnection(int turnType){
         switch (turnType){
@@ -753,8 +779,59 @@ public class SimulationActivity extends AppCompatActivity {
             case 5:
                 Log.i(TAG, "[ Direction 201 ] : 도착지입니다. ");
                 break;
+            case 9:
+                Log.i(TAG, "[ Firmware Connection Cancel Direction ]");
+                break;
         }   // [ End switch ]
     }
+
+
+    public void initSimulation(){
+        // [ Simulation ]
+        info_list = new ArrayList<>();
+        coordinates_list = new ArrayList<>();
+
+        // [ Simulation Variable ]
+        tpoint = null;
+        tMapMarkerItem = null;
+
+        simul_coordinates_index = 0;
+        simul_info_index = 0;
+        simul_turntype_index = 0;
+
+        simul_next_latitude = 0.0;
+        simul_next_longitude = 0.0;
+
+        simul_destination_latitude = 0.0;
+        simul_destination_longitude = 0.0;
+
+        simul_current_latitude = 0.0;
+        simul_current_longitude = 0.0;
+
+        simul_destination_check = false;
+        simul_direction_check = true;
+        simul_next_check = true;
+        simul_check50 = false;
+        simul_check30 = false;
+        simul_check10 = false;
+
+        simul_addValue = 0.0;
+        simul_coordi_distance = 0.0;       // [ 다음 coordinates_list 까지의 거리 ]
+        simul_info_distance = 0.0;         // [ 다음 info_list 까지의 거리 ]
+
+
+        simul_gap_latitude = 0.0;
+        simul_gap_longitude = 0.0;
+        simul_turnType = 0;
+        simul_before_turnType = 0;
+
+        current_distance = 0;
+        strCurrentDistance = "";
+        threadFlag = true;
+
+        remain_distance = 0;
+    }
+
 
     @Override
     protected void onStart() {
@@ -764,6 +841,9 @@ public class SimulationActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        Log.i(TAG, "[ Simulation Activity onResume ]");
+        tmapview.setCenterPoint(startPoint.getLongitude(), startPoint.getLatitude(), true);         // [ 현재 위치로 가기 ]
+        threadFlag = true;
     }
 
     @Override

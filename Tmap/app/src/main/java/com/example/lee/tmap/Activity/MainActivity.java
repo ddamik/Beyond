@@ -45,6 +45,10 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
 
     public static final String TAG = MainActivity.class.getSimpleName();
 
+    private TMapGpsManager gps = null;
+    public int GPS_MIN_TIME = 100;
+    public int GPS_MIN_DISTANCE = 5;
+
     public static double cur_longitude = 0.0;
     public static double cur_latitude = 0.0;
 
@@ -60,6 +64,7 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
 
         // UUID & Recent Path List
         String strUUID = this.GetDevicesUUID(this);
@@ -121,17 +126,6 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
         }
     };
 
-    @Override
-    public void onLocationChange(Location location) {
-        cur_longitude = location.getLongitude();
-        cur_latitude = location.getLatitude();
-
-        UserException.STATIC_CURRENT_LATITUDE = cur_latitude;
-        UserException.STATIC_CURRENT_LONGITUDE = cur_longitude;
-
-        Log.i(TAG, "[ MainActivity On Location Change ]");
-        Log.i(TAG, "onLocationChange" + cur_longitude + " / " + cur_latitude);
-    }   // onLocationChange
 
     // UUID
     private String GetDevicesUUID(Context mContext){
@@ -145,7 +139,28 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
         return deviceId;
     }
 
+    @Override
+    public void onLocationChange(Location location) {
+        cur_longitude = location.getLongitude();
+        cur_latitude = location.getLatitude();
 
+        Log.i(TAG, "[ MainActivity User Exception Location ]");
+        Log.i(TAG, "[ Longitude & Latitude ] : " + UserException.STATIC_CURRENT_LONGITUDE + " & " + UserException.STATIC_CURRENT_LATITUDE);
+        UserException.STATIC_CURRENT_LATITUDE = cur_latitude;
+        UserException.STATIC_CURRENT_LONGITUDE = cur_longitude;
+
+        Log.i(TAG, "[ MainActivity On Location Change ]");
+        Log.i(TAG, "onLocationChange" + cur_longitude + " / " + cur_latitude);
+    }   // onLocationChange
+
+    public void initGPS() {
+        Log.i(TAG, "[ HomeFragment init GPS ]");
+        gps = new TMapGpsManager(MainActivity.this);
+        gps.setMinTime(GPS_MIN_TIME);
+        gps.setMinDistance(GPS_MIN_DISTANCE);
+        gps.setProvider(TMapGpsManager.GPS_PROVIDER);
+        gps.OpenGps();
+    }   // initGPS
 
     //
     @Override
@@ -156,11 +171,13 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
     @Override
     protected void onResume() {
         super.onResume();
+        initGPS();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+        Log.i(TAG, "[ Close GPS ]");
     }
 
     @Override

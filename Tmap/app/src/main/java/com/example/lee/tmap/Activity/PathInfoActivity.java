@@ -121,8 +121,6 @@ public class PathInfoActivity extends AppCompatActivity {
         tv_total_fare = (TextView) findViewById(R.id.tv_total_fare);
         tv_time = (TextView) findViewById(R.id.tv_time);
 
-
-        pathInfo = new ArrayList<TmapDataVO>();
         tMapData = new TMapData();
         initLocation(tmpArrival_name, tmpLongitude, tmpLatitude);                 // 시작할때의 현재위치를 가져온다. TMap은 Point 기준이기때문에 위도와 경도를 Point로 셋팅.
         initMapView();                  // 지도 초기화
@@ -131,6 +129,7 @@ public class PathInfoActivity extends AppCompatActivity {
         // initCurrentMarker(current_longitude, current_latitude);         // 현재 위치의 마커를 표시
         // initDestinationMarker(des_longitude, des_latitude, des_name);   // 도착 지점의 마커를 표시
 
+        Log.i(TAG, "[ Find Path ]");
         tMapData.findPathDataWithType(TMapData.TMapPathType.CAR_PATH, startPoint, endPoint, new TMapData.FindPathDataListenerCallback() {
             @Override
             public void onFindPathData(TMapPolyLine tMapPolyLine) {
@@ -139,6 +138,7 @@ public class PathInfoActivity extends AppCompatActivity {
                 tmapview.addTMapPath(tMapPolyLine);
             }
         });
+        Log.i(TAG, "[ Start Guide ]");
         startGuide(startPoint, endPoint);
         /*
             Guide
@@ -283,7 +283,6 @@ public class PathInfoActivity extends AppCompatActivity {
                             Log.i(TAG, "[ Car Path ] Total TaxiFare : " + response.body().getFeatures().get(i).getProperties().getTaxiFare());
 
                             int totalTime = response.body().getFeatures().get(i).getProperties().getTotalTime();
-                            ;
                             int total_fare = response.body().getFeatures().get(i).getProperties().getTotalFare();
                             int total_distance = response.body().getFeatures().get(i).getProperties().getTotalDistance();
 

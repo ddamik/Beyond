@@ -8,6 +8,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -23,6 +25,7 @@ import android.widget.Toast;
 import com.example.lee.tmap.ApiService;
 import com.example.lee.tmap.R;
 import com.example.lee.tmap.UserException;
+import com.example.lee.tmap.ValueObject.GuideDataVO;
 import com.example.lee.tmap.ValueObject.TmapDataVO;
 import com.skp.Tmap.TMapData;
 import com.skp.Tmap.TMapGpsManager;
@@ -61,8 +64,8 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
         GPS
     */
     private TMapGpsManager gps = null;
-    public static int GPS_MIN_TIME = 100;
-    public static int GPS_MIN_DISTANCE = 5;
+    public int GPS_MIN_TIME = 100;
+    public int GPS_MIN_DISTANCE = 5;
 
     double current_longitude = 0.0;
     double current_latitude = 0.0;
@@ -74,6 +77,8 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
 
     // 경로 그리기
     TMapData tMapData;
+    private boolean threadFlag = true;
+    private Thread uiThread;
 
     // 주행
     public int guide_index = 0;
@@ -123,11 +128,10 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
         path_list = new ArrayList<>();  // 주행정보
         tMapData = new TMapData();
 
+        Log.i(TAG, "[ Temp Value ] Longitude & Latitude = " + tmpLongitude + " & " + tmpLatitude + " & " + tmpArrival_name);
         initLocation(tmpLongitude, tmpLatitude, tmpArrival_name);                 // 시작할때의 현재위치를 가져온다. TMap은 Point 기준이기때문에 위도와 경도를 Point로 셋팅.
         initGPS();                      // GPS ghkftjdghk
         initMapView();                  // 지도 초기화
-
-        tmapview.setCenterPoint(startPoint.getLongitude(), startPoint.getLatitude(), false);         // [ 현재 위치로 가기 ]
 
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inSampleSize = 2;
@@ -165,6 +169,15 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
                 finish();
             }
         }); // [ 안내종료 버튼 ]
+
+        uiThread = new Thread() {
+            @Override
+            public void run() {
+                handler.sendEmptyMessage(0);
+            }
+        };
+        uiThread.start();
+
    }   //onCreate
 
     // 지도 셋팅
@@ -198,7 +211,7 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
 
     @Override
     public void onLocationChange(Location location) {
-        Log.i(TAG, "[ onLocationChange ] : Longitude / Latitude : " + location.getLongitude() + " / " + location.getLatitude());
+
         // Toast.makeText(getApplicationContext(), "[ onLocationChange ] " + location.getLongitude() + " / " + location.getLatitude(), Toast.LENGTH_LONG).show();
 
         current_longitude = location.getLongitude();
@@ -207,7 +220,16 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
         startPoint.setLongitude(current_longitude);
         startPoint.setLatitude(current_latitude);
 
-        tmapview.setLocationPoint(startPoint.getLongitude(), startPoint.getLatitude());
+        uiThread = new Thread() {
+            @Override
+            public void run() {
+                while (threadFlag) {
+                    handler.sendEmptyMessage(0);
+                }
+            }
+        };
+        uiThread.start();
+        Log.i(TAG, "[ onLocationChange ] : Longitude / Latitude : " + location.getLongitude() + " / " + location.getLatitude());
 //        tmapview.setCenterPoint(startPoint.getLongitude(), startPoint.getLatitude(), true);
     }
 
@@ -216,6 +238,7 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
         des_longitude = tmpLongitude;
         des_latitude = tmpLatitude;
         des_name = strArrivalName;
+
 
         current_latitude = UserException.STATIC_CURRENT_LATITUDE;
         current_longitude = UserException.STATIC_CURRENT_LONGITUDE;
@@ -229,6 +252,7 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
 
     // 길 안내 시작
     public void getPathInfo(TMapPoint startPoint, TMapPoint endPoint) {
+        Log.i(TAG, " [ Get Path Information ] ");
         tmapview.removeAllMarkerItem();
 
         // 위도(Latitude) : 37 / 경도(Longitude) : 127
@@ -239,15 +263,15 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
         String reqCoordType = "WGS84GEO";
 
 
-        Log.i(TAG, "Start Point : " + startX + " / " + startY);
-        Log.i(TAG, "End Point : " + endX + " / " + endY);
+        Log.i(TAG, "[ Guide ] : Start Point : " + startX + " / " + startY);
+        Log.i(TAG, "[ Guide ] : End Point : " + endX + " / " + endY);
 
         Retrofit client = new Retrofit.Builder().baseUrl(ApiService.API_URL).addConverterFactory(GsonConverterFactory.create()).build();
         ApiService apiService = client.create(ApiService.class);
-        Call<TmapDataVO> call = apiService.getGuidePath(endX, endY, reqCoordType, startX, startY);
-        call.enqueue(new Callback<TmapDataVO>() {
+        Call<GuideDataVO> call = apiService.getGuidePathResult(endX, endY, reqCoordType, startX, startY);
+        call.enqueue(new Callback<GuideDataVO>() {
             @Override
-            public void onResponse(Call<TmapDataVO> call, Response<TmapDataVO> response) {
+            public void onResponse(Call<GuideDataVO> call, Response<GuideDataVO> response) {
                 if (response.isSuccessful()) {
                     Log.i(TAG, "[ onResponse ] is Success");
                     int length = response.body().getFeatures().size();
@@ -270,18 +294,32 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
                         Log.i(TAG, "[ Car Path ] Distance : " + response.body().getFeatures().get(i).getProperties().getDistance());
                         Log.i(TAG, "[ Car Path ] Description : " + response.body().getFeatures().get(i).getProperties().getDescription());
                         Log.i(TAG, "[ Car Path ] TurnType : " + response.body().getFeatures().get(i).getProperties().getTurnType());
+
+
+                        double coordiLongitude = response.body().getFeatures().get(i).getGeoMetry().getCoordinates().get(0).getLongitude();
+                        double coordiLatitude = response.body().getFeatures().get(i).getGeoMetry().getCoordinates().get(0).getLatitude();
+
+                        Log.i(TAG, "[ Guide Path Coordinates ] ");
+                        Log.i(TAG, "[ Longitude & Latitude ] : " + coordiLongitude + " & " + coordiLatitude);
                     }   // for
                 }   // if(response.isSuccessful())
             }   // onResponse
 
             @Override
-            public void onFailure(Call<TmapDataVO> call, Throwable t) {
+            public void onFailure(Call<GuideDataVO> call, Throwable t) {
 
             }
         }); // call.enqueue
     }   // getPathInfo
 
-    //
+    private Handler handler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            Log.i(TAG, "[ Handler ] : " + startPoint.getLongitude() + " & " + startPoint.getLatitude());
+            tmapview.setLocationPoint(startPoint.getLongitude(), startPoint.getLatitude());
+        }
+    };   // [ End Handler ]
+
     @Override
     protected void onStart() {
         super.onStart();
@@ -298,6 +336,7 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
         super.onPause();
         // GPS중단
         gps.CloseGps();
+                    threadFlag = false;
     }
 
     @Override

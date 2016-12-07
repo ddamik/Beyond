@@ -1,5 +1,6 @@
 package com.example.lee.tmap;
 
+import com.example.lee.tmap.ValueObject.GuideDataVO;
 import com.example.lee.tmap.ValueObject.RecentPathVO;
 import com.example.lee.tmap.ValueObject.ReverseGeocodingVO;
 import com.example.lee.tmap.ValueObject.TmapDataVO;
@@ -45,6 +46,20 @@ public interface ApiService {
         @Field("reqCoordType") String reqCoordType,
         @Field("startX") String startX,
         @Field("startY") String startY
+    );
+
+    @Headers({
+            "accept: application/json",
+            "appKey: 483f055b-19f2-3a22-a3fb-935bc1684b0b"
+    })
+    @FormUrlEncoded
+    @POST("/tmap/routes?version=1")
+    Call<GuideDataVO> getGuidePathResult(
+            @Field("endX") String endX,
+            @Field("endY") String endY,
+            @Field("reqCoordType") String reqCoordType,
+            @Field("startX") String startX,
+            @Field("startY") String startY
     );
 
 
