@@ -13,6 +13,8 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -104,6 +106,7 @@ public class ArrivalPathListFragment extends Fragment implements TMapGpsManager.
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         Log.i(TAG, "onCreateView() is called.");
+        setHasOptionsMenu(true);
         return inflater.inflate(R.layout.fragment_arrival_path_list, container, false);
     }
 
@@ -161,6 +164,12 @@ public class ArrivalPathListFragment extends Fragment implements TMapGpsManager.
             }
         });
         */
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_arrival_path_list, menu);
+        super.onCreateOptionsMenu(menu, inflater);
     }
 
     public void selectDestination(String searchName) {
@@ -293,6 +302,12 @@ public class ArrivalPathListFragment extends Fragment implements TMapGpsManager.
         UserException.STATIC_CURRENT_LONGITUDE = location.getLongitude();
 
         Log.i(TAG, "[ SearchDestinationActivity On Location Change ]");
+    }
+
+    public void removeDestinationTextChangedListener(){
+        et_destination.setText("");
+        et_destination.clearFocus();
+        et_destination.removeTextChangedListener(destinationTextWatcher);
     }
 
 

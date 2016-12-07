@@ -6,6 +6,15 @@
     <string name="navigation_drawer_open">Navigation open</string>
     <string name="navigation_drawer_close">Navigation close</string>
     <string name="ble_scan">스캔중</string>
+    <string name="ble_connect">연결됨</string>
+    <string name="back_menu">뒤로가기</string>
+
+    <string name="pref_key">pref</string>
+
+    <string name="ble_pref_key">Ble Status</string>
+    <string name="ble_on">BLE On</string>
+    <string name="ble_off">BLE Off</string>
+    <string name="ble_init">BLEInit</string>
 
     <string name="overlay">overlay</string>
     <string name="animateTo">animateTo</string>

@@ -4,6 +4,11 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
+
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.IntentFilter;
+
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -14,6 +19,8 @@ import android.support.v7.widget.Toolbar;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,14 +31,18 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.lee.tmap.Activity.PathInfoActivity;
+
+import com.example.lee.tmap.Activity.MainActivity;
+
 import com.example.lee.tmap.Adapter.GridViewAdapter;
 import com.example.lee.tmap.ApiService;
+import com.example.lee.tmap.PSoCBleService;
 import com.example.lee.tmap.R;
 import com.example.lee.tmap.UserException;
 import com.example.lee.tmap.ValueObject.RecentPathListVO;
 import com.example.lee.tmap.ValueObject.RecentPathVO;
 import com.example.lee.tmap.View.ClearEditText;
-import com.skp.Tmap.TMapGpsManager;
+
 import com.wang.avi.AVLoadingIndicatorView;
 
 import java.util.ArrayList;
@@ -50,6 +61,13 @@ import retrofit2.Retrofit;
 public class HomeFragment extends Fragment {
     private final static String TAG = HomeFragment.class.getSimpleName();
 
+    private static final int GRID_VIEW_NUMBER = 12;
+    private static final int DESTINATION_NUMBER = 9;
+    private final static String SIMULATION_FINISH_BROADCAST_RECEIVER = "simulationFinishBroadcastReceiver";
+    private BroadcastReceiver simulateFinishBroadcastReceiver;
+    private IntentFilter simulateResultFilter;
+
+    private static PSoCBleService mPSoCBleService;
 
 
     private GridView gridView;
@@ -58,6 +76,9 @@ public class HomeFragment extends Fragment {
     private ClearEditText et_destination;
     String[] recentPathList;
     private int recentArrivalNameListLength;
+
+    /*private SharedPreferences pref;
+    private SharedPreferences.Editor editor;*/
 
     private AVLoadingIndicatorView bleWaveView;
     private ImageView watchImageView;
@@ -76,6 +97,7 @@ public class HomeFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         Log.i(TAG, "onCreateView() is called.");
+        setHasOptionsMenu(true);
         return inflater.inflate(R.layout.fragment_home, container, false);
     }
 
@@ -105,11 +127,18 @@ public class HomeFragment extends Fragment {
         ConnectivityManager manager = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
         mobile = manager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
         wifi = manager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+        mPSoCBleService = new PSoCBleService();
+
+        String prefKey = getResources().getString(R.string.pref_key);
+
+    /*    pref = getActivity().getSharedPreferences(prefKey, getActivity().MODE_PRIVATE);
+        editor = pref.edit();*/
+
+
         watchImageView.setImageResource(R.drawable.ic_scan);
         bleMessageTextView.setText(R.string.ble_scan);
         watchImageView.bringToFront();
 
-        et_destination.setOnFocusChangeListener(editTextOnFocusChangeListener);
 
         // UUID & Recent Path List
         String strUUID = this.GetDevicesUUID(getActivity());
@@ -144,6 +173,7 @@ public class HomeFragment extends Fragment {
                         recentPathList[i] = arrivalName;
                         vo = new RecentPathListVO(arrivalName, latitudeValue, longitudeValue);
                         destinationList.add(vo);
+
                     }   // for
                     gridView.setAdapter(new GridViewAdapter(getActivity(), recentPathList));
                 }   // respsone.isSuccessful
@@ -156,6 +186,35 @@ public class HomeFragment extends Fragment {
                 Log.i(TAG, "[ RecentPathVO Call ] : " + call);
             }
         });
+
+       /* simulateFinishBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Log.i(TAG, "onReceive Success ");
+                updateBluetoothConnectedView();
+*//*
+                String prefKey = getResources().getString(R.string.pref_key);
+
+                SharedPreferences  pref = getActivity().getSharedPreferences(prefKey, getActivity().MODE_PRIVATE);
+                SharedPreferences.Editor editor = pref.edit();
+                String getBlePrefKey = getResources().getString(R.string.ble_pref_key);
+                String getStringBleOn = getResources().getString(R.string.ble_on);
+
+                editor.putString(getBlePrefKey, getStringBleOn);
+                editor.commit();
+*//*
+
+            }
+        };
+        simulateResultFilter = new IntentFilter();
+        simulateResultFilter.addAction(SIMULATION_FINISH_BROADCAST_RECEIVER);
+        getActivity().registerReceiver(simulateFinishBroadcastReceiver, simulateResultFilter);*/
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_home, menu);
+        super.onCreateOptionsMenu(menu, inflater);
     }
 
     private String GetDevicesUUID(Context mContext) {
@@ -261,16 +320,32 @@ public class HomeFragment extends Fragment {
     }   // ProgressAsync
 
 
+    public void updateBluetoothConnectedView() {
+        watchImageView.setImageResource(R.drawable.ic_watch);
+        bleMessageTextView.setText(R.string.ble_connect);
+    }
 
     private View.OnFocusChangeListener editTextOnFocusChangeListener = new View.OnFocusChangeListener() {
         @Override
         public void onFocusChange(View v, boolean hasFocus) {
             if (hasFocus) {
                 Log.i(TAG, "lost the focus");
+
+                String getBlePrefKey = getResources().getString(R.string.ble_pref_key);
+                String getStringInit = getResources().getString(R.string.ble_init);
+                String getStringBleOn = getResources().getString(R.string.ble_on);
+/*
+                String bleStatus = pref.getString(getBlePrefKey, getStringInit);
+*/
+
+
                 if (wifi.isConnected() || mobile.isConnected()) {
                     Log.i(TAG, "[ 인터넷 연결이 완료됨. ] ");
+//                    if(bleStatus.equals(getStringBleOn)){
                     ArrivalPathListFragment fragment = new ArrivalPathListFragment();
                     getActivity().getSupportFragmentManager().beginTransaction().replace(R.id.fragment, fragment).commit();
+
+
                 } else {
                     Log.i(TAG, "[ 인터넷 연결이 필요함. ] ");
                     Toast.makeText(getActivity(), "[ 인터넷 연결이 필요합니다. ] ", Toast.LENGTH_LONG).show();
@@ -330,6 +405,15 @@ public class HomeFragment extends Fragment {
     public void onResume() {
         Log.i(TAG, "onResume() is called.");
         super.onResume();
+        Log.i(TAG, "editTextOnFocusChangeListener in onResume()");
+
+        et_destination.setOnFocusChangeListener(editTextOnFocusChangeListener);
+        et_destination.clearFocus();
         bleWaveView.show();
+
+
+        if (((MainActivity) getActivity()).mConnectState) {
+            updateBluetoothConnectedView();// 페어링 완료 메시지 표시하는 UI 메서드
+        }
     }
 }

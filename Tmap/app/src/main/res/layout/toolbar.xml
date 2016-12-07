@@ -7,13 +7,19 @@
     android:background="@color/app_primary"
     app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
     app:theme="@style/ThemeOverlay.AppCompat.Dark">
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:weightSum="100">
+
 
     <LinearLayout
-        android:layout_width="fill_parent"
+        android:layout_width="0dp"
+        android:layout_weight="100"
         android:layout_height="fill_parent"
         android:layout_marginTop="@dimen/search_layout_margin"
         android:layout_marginBottom="@dimen/search_layout_margin"
-        android:layout_marginRight="@dimen/search_layout_right_margin"
         android:paddingRight="@dimen/search_layout_margin"
         android:paddingLeft="@dimen/search_layout_margin"
         android:background="@drawable/border_search"
@@ -32,6 +38,7 @@
             android:textColor="@color/search_font_color"
             android:textColorHint="@color/grey_dark"
             android:textSize="16sp"
+            android:maxLines="1"
             android:fontFamily="sans-serif-light"
             android:background="@null"
             android:hint="명칭/주소 입력" />
@@ -48,7 +55,8 @@
                 android:layout_height="wrap_content"
                 android:background="@drawable/ic_destination_search"/>
         </LinearLayout>
-
     </LinearLayout>
+
+</LinearLayout>
 
 </android.support.v7.widget.Toolbar>

@@ -12,6 +12,10 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>           <!-- UUID -->
 
+    <uses-feature android:name="android.hardware.bluetooth_le" android:required="true"/>
+    <uses-permission android:name="android.permission.BLUETOOTH"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -32,6 +36,8 @@
         <activity android:name=".Activity.PathInfoActivity" />
         <activity android:name=".Activity.GuideActivity" />
         <activity android:name=".Activity.SimulationActivity" />
+        <service android:name=".PSoCBleService" android:enabled="true"/>
+
     </application>
 
 </manifest>

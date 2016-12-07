@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -75,12 +76,17 @@ public class PathInfoActivity extends AppCompatActivity {
     /*
         경로안내
      */
-    ImageButton btn_startGuide;
+    Button btn_startGuide;
     public ArrayList<TmapDataVO> pathInfo;
     public static final int OPTION_DEFAULT = 0;
+
     private String tmpArrival_name;
-    // 모의주행
-    ImageButton btn_simulation;
+
+    /*
+        모의주행
+     */
+    Button btn_simulation;
+
 
     /*
         텍스트 정보
@@ -145,7 +151,7 @@ public class PathInfoActivity extends AppCompatActivity {
         /*
             Guide
          */
-        btn_startGuide = (ImageButton) findViewById(R.id.btn_startGuide);
+        btn_startGuide = (Button) findViewById(R.id.btn_startGuide);
         btn_startGuide.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -164,7 +170,7 @@ public class PathInfoActivity extends AppCompatActivity {
         /*
             다른경로 [ Back ]
          */
-        btn_simulation = (ImageButton) findViewById(R.id.btn_simulation);
+        btn_simulation = (Button) findViewById(R.id.btn_simulation);
         btn_simulation.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

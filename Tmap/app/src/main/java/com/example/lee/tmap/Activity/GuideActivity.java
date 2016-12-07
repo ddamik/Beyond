@@ -15,6 +15,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -86,7 +87,8 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
 
     // 겹친 layout 정보 표시
     ImageView img_direction;
-    ImageButton img_btn_currentPoint, img_btn_exit;
+    ImageButton img_btn_currentPoint;
+    Button img_btn_exit;
     TextView tv_distance, tv_remain_distance, tv_arriaval_time;
 
     /*
@@ -124,7 +126,7 @@ public class GuideActivity extends AppCompatActivity implements TMapGpsManager.o
         // 겹친 layout 정보
         img_direction = (ImageView) findViewById(R.id.img_direction);                       // 방향 이미지 ( 좌, 우, 유턴 )
         img_btn_currentPoint = (ImageButton) findViewById(R.id.img_btn_currentPoint);       // 현재위치로 가는 버튼
-        img_btn_exit = (ImageButton) findViewById(R.id.img_btn_exit);                       // 안내종료
+        img_btn_exit = (Button) findViewById(R.id.img_btn_exit);                       // 안내종료
         tv_distance = (TextView) findViewById(R.id.tv_distance);                            // 다음 안내지점까지의 거리
         tv_remain_distance = (TextView) findViewById(R.id.tv_remain_distance);              // 총 남은 거리
         tv_arriaval_time = (TextView) findViewById(R.id.tv_arrival_time);                   // 도착 예상시간

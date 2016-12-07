@@ -13,7 +13,7 @@
 
     <!-- 지도 위 텍스트 부분 -->
     <LinearLayout
-        android:background="#EAEAEA"
+        android:background="@color/white"
         android:id="@+id/locationInfoLayout"
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -50,7 +50,10 @@
                     android:textSize="@dimen/address_font_size"
                     android:textStyle="bold"
                     android:gravity="center"
-                    android:layout_weight="2" />
+                    android:layout_weight="2"
+                    android:background="@drawable/border_path_name"
+
+                    />
 
                 <TextView
                     android:id="@+id/tv_start_point"
@@ -62,7 +65,8 @@
                     android:textColor="@color/tmap_font_color"
                     android:textSize="@dimen/address_font_size"
                     android:textStyle="bold"
-                    android:background="@drawable/address"/>
+
+                    />
 
             </LinearLayout>
             <!-- 내 위치 -->
@@ -96,7 +100,10 @@
                     android:textSize="@dimen/address_font_size"
                     android:textStyle="bold"
                     android:gravity="center"
-                    android:layout_weight="2" />
+                    android:layout_weight="2"
+                    android:background="@drawable/border_path_name"
+
+                    />
 
                 <TextView
                     android:id="@+id/tv_arrival_point"
@@ -141,7 +148,7 @@
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="6">
+                android:layout_weight="5">
 
                 <!-- [ Vertical ] -->
                 <LinearLayout
@@ -172,7 +179,7 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="0dp"
-                        android:layout_weight="4">
+                        android:layout_weight="5">
 
                         <TextView
                             android:gravity="center"
@@ -193,8 +200,9 @@
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="4"
+                android:layout_weight="5"
                 android:orientation="vertical"
+                android:paddingLeft="20dp"
                 android:weightSum="10">
 
                 <LinearLayout
@@ -263,25 +271,37 @@
             android:layout_height="match_parent"
             android:orientation="horizontal">
 
-            <ImageButton
-                android:id="@+id/btn_simulation"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:text="모의주행"
-                android:src="@drawable/btn_test"
-                android:background="@android:color/transparent"
-                android:textStyle="bold" />
 
-            <ImageButton
-                android:id="@+id/btn_startGuide"
+            <Button
+                android:layout_gravity="center"
+                android:id="@+id/btn_simulation"
+                android:layout_margin="5dp"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
+                android:gravity="center"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:fontFamily="sans-serif-light"
+                android:text="모의주행"
+                android:background="@color/app_primary" />
+
+            <Button
+                android:layout_gravity="center"
+                android:id="@+id/btn_startGuide"
+                android:layout_margin="5dp"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:fontFamily="sans-serif-light"
                 android:text="안내시작"
-                android:src="@drawable/btn_guide"
-                android:background="@android:color/transparent"
-                android:textStyle="bold" />
+                android:background="@color/app_primary" />
+
         </LinearLayout>
     </LinearLayout>
     <!-- [ End Btn ] -->
