@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#ffffffff"
+    android:orientation="vertical"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="com.example.lee.beyond.PathInfoActivity">
+
+    <!-- 지도 위 텍스트 부분 -->
+    <LinearLayout
+        android:background="@color/white"
+        android:id="@+id/locationInfoLayout"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1.8"
+        android:orientation="vertical">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginLeft="@dimen/marker_margin"
+            android:layout_marginTop="@dimen/marker_margin"
+            android:layout_marginRight="@dimen/marker_margin"
+            android:layout_weight="0.9">
+
+            <ImageView
+                android:id="@+id/img_start_point"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <!-- 내 위치 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:background="@drawable/address"
+                android:weightSum="10">
+
+                <!-- [ 공간을 위한 TextView ] -->
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:text="출발지"
+                    android:textColor="@color/tmap_font_color"
+                    android:textSize="@dimen/address_font_size"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    android:layout_weight="2"
+                    android:background="@drawable/border_path_name"
+
+                    />
+
+                <TextView
+                    android:id="@+id/tv_start_point"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="8"
+                    android:gravity="center_horizontal"
+                    android:text="내 위치"
+                    android:textColor="@color/tmap_font_color"
+                    android:textSize="@dimen/address_font_size"
+                    android:textStyle="bold"
+
+                    />
+
+            </LinearLayout>
+            <!-- 내 위치 -->
+        </FrameLayout>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_margin="@dimen/marker_margin"
+            android:background="@drawable/address"
+            android:layout_weight="0.9">
+
+            <ImageView
+                android:id="@+id/img_arrival_point"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <!-- 내 목적지 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:weightSum="10">
+
+                <!-- [ 공간을 위한 TextView ] -->
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:text="도착지"
+                    android:textColor="@color/tmap_font_color"
+                    android:textSize="@dimen/address_font_size"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    android:layout_weight="2"
+                    android:background="@drawable/border_path_name"
+
+                    />
+
+                <TextView
+                    android:id="@+id/tv_arrival_point"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="8"
+                    android:gravity="center_horizontal"
+                    android:text="도착지점"
+                    android:textColor="@color/tmap_font_color"
+                    android:textSize="@dimen/address_font_size"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+            <!-- 내 위치 -->
+        </FrameLayout>
+    </LinearLayout>
+    <!-- 지도 위 텍스트 부분 -->
+
+    <RelativeLayout
+        android:id="@+id/path_info_tmap"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="10">
+
+    </RelativeLayout>
+
+
+    <!-- [ 경로 정보 ] 시간 & 거리 & 통행비 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1.5">
+
+        <!-- [ Horizontal ] -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:weightSum="10">
+
+            <!-- [ 시간 ] -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="5">
+
+                <!-- [ Vertical ] -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:weightSum="10">
+
+                    <!-- [ 소요시간 ] -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="6">
+
+                        <TextView
+                            android:gravity="center"
+                            android:id="@+id/tv_time"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:text="소요시간"
+                            android:textColor="@color/tmap_font_color"
+                            android:textSize="24dp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                    <!-- [ End 소요시간 ] -->
+
+                    <!-- [ 도착시간 ] -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="5">
+
+                        <TextView
+                            android:gravity="center"
+                            android:id="@+id/tv_arrival_time"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:text="도착시간"
+                            android:textColor="@color/tmap_font_color"
+                            android:textSize="14dp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                    <!-- [ End 도착시간 ] -->
+                </LinearLayout>
+            </LinearLayout>
+            <!-- [ End 시간 ] -->
+
+            <!-- [ 요금 & 거리 ] -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="5"
+                android:orientation="vertical"
+                android:paddingLeft="20dp"
+                android:weightSum="10">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="5">
+
+                    <ImageView
+                        android:src="@drawable/distance_blue"
+                        android:id="@+id/img_distance"
+                        android:layout_width="50dp"
+                        android:layout_height="match_parent"
+                        android:layout_gravity="center" />
+
+                    <TextView
+                        android:id="@+id/tv_total_distance"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="3"
+                        android:textColor="@color/tmap_font_color"
+                        android:textSize="14dp"
+                        android:textStyle="bold"
+                        android:gravity="center_horizontal|center_vertical"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="5">
+
+                    <ImageView
+                        android:src="@drawable/won_blue"
+                        android:id="@+id/img_fare"
+                        android:layout_width="50dp"
+                        android:layout_height="match_parent" />
+
+                    <TextView
+                        android:id="@+id/tv_total_fare"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="3"
+                        android:textColor="@color/tmap_font_color"
+                        android:textSize="14dp"
+                        android:textStyle="bold"
+                        android:gravity="center_horizontal|center_vertical"/>
+                </LinearLayout>
+            </LinearLayout>
+            <!-- [ End 요금 & 거리 ] -->
+        </LinearLayout>
+        <!-- [ End Horizontal ] -->
+    </LinearLayout>
+    <!-- [ End 경로 정보 ] -->
+
+
+    <!-- 경로정보 보이기 버튼 -->
+    <LinearLayout
+        android:id="@+id/showPathLayout"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_alignParentBottom="true"
+        android:layout_marginTop="5dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+
+            <Button
+                android:layout_gravity="center"
+                android:id="@+id/btn_simulation"
+                android:layout_margin="5dp"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:fontFamily="sans-serif-light"
+                android:text="모의주행"
+                android:background="@color/app_primary" />
+
+            <Button
+                android:layout_gravity="center"
+                android:id="@+id/btn_startGuide"
+                android:layout_margin="5dp"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:fontFamily="sans-serif-light"
+                android:text="안내시작"
+                android:background="@color/app_primary" />
+
+        </LinearLayout>
+    </LinearLayout>
+    <!-- [ End Btn ] -->
+</LinearLayout>
