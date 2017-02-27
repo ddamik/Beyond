@@ -3,10 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
+
     android:background="#00ff0000"
     android:orientation="vertical"
     android:weightSum="10">
@@ -25,6 +22,7 @@
             android:src="@drawable/direction_13"
             android:layout_width="0dp"
             android:layout_height="match_parent"
+            android:layout_margin="5dp"
             android:layout_weight="2.5"/>
 
         <TextView
@@ -32,7 +30,6 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:gravity="center"
-            android:text="80m"
             android:textColor="@color/tmap_font_color"
             android:textSize="36dp"
             android:textStyle="bold"
@@ -49,7 +46,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="7.5"
+        android:layout_weight="7.8"
         android:weightSum="10"
         android:orientation="horizontal">
 
@@ -73,7 +70,8 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_weight="0.7"
+        android:layout_margin="5dp"
         android:weightSum="10"
         android:orientation="horizontal"
         android:background="#ffffff">
@@ -82,38 +80,35 @@
             android:id="@+id/tv_remain_distance"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="3"
+            android:layout_weight="4"
             android:textColor="@color/tmap_font_color"
             android:textSize="18dp"
             android:textStyle="bold"
-            android:text="14:05 도착예정"
             android:gravity="center"/>
 
         <TextView
             android:id="@+id/tv_arrival_time"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="4.5"
+            android:layout_weight="4"
             android:textColor="@color/tmap_font_color"
             android:textSize="18dp"
             android:textStyle="bold"
-            android:text="14:05 도착예정"
             android:gravity="center"/>
-
 
         <Button
             android:layout_gravity="center"
             android:id="@+id/img_btn_exit"
-            android:layout_margin="5dp"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="2.5"
+            android:layout_weight="2"
             android:gravity="center"
             android:textColor="@color/white"
             android:textStyle="bold"
             android:textSize="16sp"
             android:fontFamily="sans-serif-light"
             android:text="안내종료"
+            android:layout_marginTop="5dp"
             android:background="@color/app_primary" />
 
     </LinearLayout>

@@ -30,7 +30,6 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:gravity="center"
-            android:text="1.4km"
             android:textColor="@color/tmap_font_color"
             android:textSize="36dp"
             android:textStyle="bold"
@@ -85,7 +84,6 @@
             android:textColor="@color/tmap_font_color"
             android:textSize="18dp"
             android:textStyle="bold"
-            android:text="14:05 도착예정"
             android:gravity="center"/>
 
         <TextView
@@ -96,7 +94,6 @@
             android:textColor="@color/tmap_font_color"
             android:textSize="18dp"
             android:textStyle="bold"
-            android:text="14:05 도착예정"
             android:gravity="center"/>
 
 

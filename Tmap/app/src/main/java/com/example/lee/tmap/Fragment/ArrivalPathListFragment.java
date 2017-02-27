@@ -114,6 +114,11 @@ public class ArrivalPathListFragment extends Fragment implements TMapGpsManager.
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         Log.i(TAG, "onViewCreated() is called.");
         super.onViewCreated(view, savedInstanceState);
+
+        toolbar = (Toolbar) getActivity().findViewById(R.id.toolbar);
+        et_destination = (ClearEditText) toolbar.findViewById(R.id.et_destination);
+        listview_destination = (ListView) getView().findViewById(R.id.listview_destination);
+
     }
 
     @Override
@@ -121,10 +126,7 @@ public class ArrivalPathListFragment extends Fragment implements TMapGpsManager.
         Log.i(TAG, "onActivityCreated() is called.");
         super.onActivityCreated(savedInstanceState);
 
-        toolbar = (Toolbar) getActivity().findViewById(R.id.toolbar);
-        et_destination = (ClearEditText) toolbar.findViewById(R.id.et_destination);
-        listview_destination = (ListView) getView().findViewById(R.id.listview_destination);
-
+        listview_destination.invalidate();
         et_destination.addTextChangedListener(destinationTextWatcher);
         listview_destination.setOnItemClickListener(destinationListViewOnItemClickListener);
 
@@ -201,19 +203,11 @@ public class ArrivalPathListFragment extends Fragment implements TMapGpsManager.
                     TMapPoint point = tMapPOIItem.getPOIPoint();                            // POI의 Point
                     adapter.addItem(name, address, point);                                  // 리스트에 뿌려줄 수 있도록 어댑터에 추가
                 }   // for
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        getActivity().runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                autoCheck = false;
-                                adapter.notifyDataSetChanged();
-                                // 해당 작업을 처리함
-                            }
-                        });
-                    }
-                }).start();
+
+
+                TextWatchAsync textWatchAsync = new TextWatchAsync();
+                textWatchAsync.execute(false);
+
             }   // onFindAroundNamePOI
         }); // findAroundNamePOI
     }   // selectDestination
@@ -243,6 +237,7 @@ public class ArrivalPathListFragment extends Fragment implements TMapGpsManager.
                     if (UserException.STATIC_CURRENT_GPS_CHECK) {
 
                         Intent intent = new Intent(getActivity(), PathInfoActivity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
                         intent.putExtra("des_longitude", des_longitude);
                         intent.putExtra("des_latitude", des_latitude);
                         intent.putExtra("arrival_name", des_name);
@@ -354,19 +349,8 @@ public class ArrivalPathListFragment extends Fragment implements TMapGpsManager.
 
                     //   UI 변환
 
-                  new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            getActivity().runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    autoCheck = true;
-                                    adapter.notifyDataSetChanged();
-                                    // 해당 작업을 처리함
-                                }
-                            });
-                        }
-                    }).start();
+                    TextWatchAsync textWatchAsync = new TextWatchAsync();
+                    textWatchAsync.execute(true);
 
                 }   // onAutoComplete
             }); // tMapData.autoComplete
@@ -380,6 +364,30 @@ public class ArrivalPathListFragment extends Fragment implements TMapGpsManager.
         public void afterTextChanged(Editable s) {
         }
     };
+
+
+    private class TextWatchAsync extends AsyncTask<Boolean, Boolean, Boolean> {
+
+
+        @Override
+        protected void onPreExecute() {
+            Log.i(TAG, "[ On Pre Execute ]");
+            super.onPreExecute();
+        }
+
+        @Override
+        protected Boolean doInBackground(Boolean... params) {
+            return params[0];
+        }   // doInBackground
+
+        @Override
+        protected void onPostExecute(Boolean aVoid) {
+            Log.i(TAG, "[ On Post Execute ] ");
+            super.onPostExecute(aVoid);
+            autoCheck = aVoid;
+            adapter.notifyDataSetChanged();
+        }   // onPostExecute
+    }   // ProgressAsync
 
 
     @Override

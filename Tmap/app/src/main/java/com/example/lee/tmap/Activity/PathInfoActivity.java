@@ -10,13 +10,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.lee.tmap.ApiService;
-import com.example.lee.tmap.Fragment.ArrivalPathListFragment;
 import com.example.lee.tmap.R;
 import com.example.lee.tmap.UserException;
 import com.example.lee.tmap.ValueObject.ReverseGeocodingVO;
@@ -156,6 +153,7 @@ public class PathInfoActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(PathInfoActivity.this, GuideActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 intent.putExtra("des_latitude", des_latitude);
                 intent.putExtra("des_longitude", des_longitude);
                 intent.putExtra("arrival_name", tmpArrival_name);
@@ -175,6 +173,7 @@ public class PathInfoActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(PathInfoActivity.this, SimulationActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 startActivity(intent);
                 finish();
             }
@@ -216,6 +215,8 @@ public class PathInfoActivity extends AppCompatActivity {
         current_latitude = UserException.STATIC_CURRENT_LATITUDE;
         current_longitude = UserException.STATIC_CURRENT_LONGITUDE;
 
+        current_longitude = 127.073921;
+        current_latitude = 37.551238;
 //        startPoint = new TMapPoint(current_longitude, current_latitude);
 //        endPoint = new TMapPoint(des_longitude, des_latitude);
 

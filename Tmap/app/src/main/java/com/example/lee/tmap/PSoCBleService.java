@@ -31,7 +31,8 @@ import java.util.UUID;
 /**
  * Created by Nam on 2016. 11. 8..
  */
-@TargetApi(Build.VERSION_CODES.LOLLIPOP) // This is required to allow us to use the lollipop and later scan APIs
+@TargetApi(Build.VERSION_CODES.LOLLIPOP)
+// This is required to allow us to use the lollipop and later scan APIs
 public class PSoCBleService extends Service {
 
     private final static String TAG = PSoCBleService.class.getSimpleName();
@@ -51,11 +52,11 @@ public class PSoCBleService extends Service {
 
     //00:A0:50:0A:1D:19
     // UUIDs for the service and characteristics that the custom CapSenseLED service uses
-    private final static String baseUUID =                   "00000000-0000-1000-8000-00805f9b34f";
-    private final static String capsenseLedServiceUUID =      baseUUID + "0";
-    public  final static String ledCharacteristicUUID =       baseUUID + "1";
-    public  final static String capsenseCharacteristicUUID =  baseUUID + "2";
-    private final static String CccdUUID =                   "00002902-0000-1000-8000-00805f9b34fb";
+    private final static String baseUUID = "00000000-0000-1000-8000-00805f9b34f";
+    private final static String capsenseLedServiceUUID = baseUUID + "0";
+    public final static String ledCharacteristicUUID = baseUUID + "1";
+    public final static String capsenseCharacteristicUUID = baseUUID + "2";
+    private final static String CccdUUID = "00002902-0000-1000-8000-00805f9b34fb";
 
     // Variables to keep track of the LED switch state and CapSense Value
     private static boolean mLedSwitchState = false;
@@ -80,7 +81,7 @@ public class PSoCBleService extends Service {
      * This is a binder for the PSoCBleService
      */
     public class LocalBinder extends Binder {
-       public PSoCBleService getService() {
+        public PSoCBleService getService() {
             return PSoCBleService.this;
         }
     }
@@ -95,7 +96,6 @@ public class PSoCBleService extends Service {
         // The BLE close method is called when we unbind the service to free up the resources.
         close();
         return super.onUnbind(intent);
-
 
 
     }
@@ -132,16 +132,15 @@ public class PSoCBleService extends Service {
      */
     public void scan() {
         /* Scan for devices and look for the one with the service that we want */
-        UUID capsenseLedService =       UUID.fromString(capsenseLedServiceUUID);
+        UUID capsenseLedService = UUID.fromString(capsenseLedServiceUUID);
         UUID[] capsenseLedServiceArray = {capsenseLedService};
         int index = 1;
         // Use old scan method for versions older than lollipop
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             //noinspection deprecation
 
-            for(UUID serviceName : capsenseLedServiceArray)
-            {
-                Log.e(TAG, index +  " : " + serviceName.toString());
+            for (UUID serviceName : capsenseLedServiceArray) {
+                Log.e(TAG, index + " : " + serviceName.toString());
                 index++;
             }
             Log.e(TAG, "capsenseLedServiceUUID : " + capsenseLedServiceUUID);
@@ -259,11 +258,7 @@ public class PSoCBleService extends Service {
 
     public void writeDirectionCharacteristic(int value) {
         byte[] byteVal = new byte[1];
-        if (value >= 0 && value <= 5) {
-            byteVal[0] = (byte) (value);
-        } else {
-            byteVal[0] = (byte) (0);
-        }
+        byteVal[0] = (byte) (value);
         Log.i(TAG, "DirectionInfo :" + value);
         mLedCharacterisitc.setValue(byteVal);
         mBluetoothGatt.writeCharacteristic(mLedCharacterisitc);
@@ -311,7 +306,7 @@ public class PSoCBleService extends Service {
     /**
      * Implements the callback for when scanning for devices has found a device with
      * the service we are looking for.
-     *
+     * <p/>
      * This is the callback for BLE scanning on versions prior to Lollipop
      */
     private BluetoothAdapter.LeScanCallback mLeScanCallback =
@@ -328,7 +323,7 @@ public class PSoCBleService extends Service {
     /**
      * Implements the callback for when scanning for devices has faound a device with
      * the service we are looking for.
-     *
+     * <p/>
      * This is the callback for BLE scanning for LOLLIPOP and later
      */
     private final ScanCallback mScanCallback = new ScanCallback() {
@@ -401,7 +396,7 @@ public class PSoCBleService extends Service {
                 // In this case, the only read the app does is the LED state.
                 // If the application had additional characteristics to read we could
                 // use a switch statement here to operate on each one separately.
-                if(uuid.equals(ledCharacteristicUUID)) {
+                if (uuid.equals(ledCharacteristicUUID)) {
                     final byte[] data = characteristic.getValue();
                     // Set the LED switch state variable based on the characteristic value ttat was read
                     mLedSwitchState = ((data[0] & 0xff) != 0x00);
@@ -427,8 +422,8 @@ public class PSoCBleService extends Service {
             // In this case, the only notification the apps gets is the CapSense value.
             // If the application had additional notifications we could
             // use a switch statement here to operate on each one separately.
-            if(uuid.equals(capsenseCharacteristicUUID)) {
-                mCapSenseValue = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_SINT16,0).toString();
+            if (uuid.equals(capsenseCharacteristicUUID)) {
+                mCapSenseValue = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_SINT16, 0).toString();
             }
 
             // Notify the main activity that new data is available
