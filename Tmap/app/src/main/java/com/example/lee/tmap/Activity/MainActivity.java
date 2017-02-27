@@ -111,6 +111,7 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
             mPSoCBleService = ((PSoCBleService.LocalBinder) service).getService();
             mServiceConnected = true;
             mPSoCBleService.initialize();
+            BeyondSingleton.getInstance().setBleConnectedStatus(true);
 
         }
 
@@ -123,6 +124,7 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
         public void onServiceDisconnected(ComponentName componentName) {
             Log.i(TAG, "onServiceDisconnected");
             mPSoCBleService = null;
+            BeyondSingleton.getInstance().setBleConnectedStatus(false);
         }
     };
 
