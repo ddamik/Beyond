@@ -335,6 +335,18 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
             finish();
             return;
         }
+        else if (requestCode == REQUEST_ENABLE_BLE && resultCode == Activity.RESULT_OK) {
+            startBluetooth();
+            new Timer().schedule(new TimerTask() {
+                public void run() {
+                    // UI 및 로직
+                    searchBluetooth();
+                    Log.i(TAG, "Timer run searchBluetooth in onResume()");
+
+                }
+            }, 3000); // 3초후 실행
+            return;
+        }
 
         super.onActivityResult(requestCode, resultCode, data);
     }
@@ -364,11 +376,11 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
         filter.addAction(PSoCBleService.ACTION_DATA_RECEIVED);
         registerReceiver(mBleUpdateReceiver, filter);
 
-        startBluetooth();
         new Timer().schedule(new TimerTask() {
             public void run() {
                 // UI 및 로직
-                searchBluetooth();
+                startBluetooth();
+//                searchBluetooth();
                 Log.i(TAG, "Timer run searchBluetooth in onResume()");
 
             }
@@ -413,6 +425,8 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
         if (!mBluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BLE);
+            Log.d(TAG, "bluetooth dialog");
+
         }
 
         // Start the BLE Service
@@ -425,6 +439,8 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
         search_button.setEnabled(true);*/
         Log.d(TAG, "Bluetooth is Enabled");
 //        searchBluetooth();
+//        searchBluetooth();
+
     }
 
 
