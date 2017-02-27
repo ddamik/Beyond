@@ -30,7 +30,6 @@ import com.example.lee.tmap.Activity.MainActivity;
 import com.example.lee.tmap.Activity.PathInfoActivity;
 import com.example.lee.tmap.Adapter.GridViewAdapter;
 import com.example.lee.tmap.ApiService;
-import com.example.lee.tmap.PSoCBleService;
 import com.example.lee.tmap.R;
 import com.example.lee.tmap.UserException;
 import com.example.lee.tmap.Utils.BeyondSingleton;
@@ -61,7 +60,6 @@ public class HomeFragment extends Fragment {
     private BroadcastReceiver simulateFinishBroadcastReceiver;
     private IntentFilter simulateResultFilter;
 
-    private static PSoCBleService mPSoCBleService;
 
 
     private GridView gridView;
@@ -121,7 +119,6 @@ public class HomeFragment extends Fragment {
         ConnectivityManager manager = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
         mobile = manager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
         wifi = manager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-        mPSoCBleService = new PSoCBleService();
 
 
         watchImageView.setImageResource(R.drawable.ic_scan);
