@@ -215,6 +215,8 @@ public class PathInfoActivity extends AppCompatActivity {
         current_latitude = UserException.STATIC_CURRENT_LATITUDE;
         current_longitude = UserException.STATIC_CURRENT_LONGITUDE;
 
+        current_longitude = 127.073921;
+        current_latitude = 37.551238;
 //        startPoint = new TMapPoint(current_longitude, current_latitude);
 //        endPoint = new TMapPoint(des_longitude, des_latitude);
 

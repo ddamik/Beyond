@@ -51,7 +51,7 @@ public class SimulationActivity extends AppCompatActivity {
     public TMapData tMapData;
     private RelativeLayout tMapLayout;
     private TMapView tmapview = null;
-    public static int ZOOM_LEVEL = 19;
+    public static int ZOOM_LEVEL = 17;
 
     // [ GPS & Point ]
     private TMapPoint startPoint;
@@ -124,6 +124,7 @@ public class SimulationActivity extends AppCompatActivity {
     private static PSoCBleService mPSoCBleService;
     private boolean isRunningPSocBleService;
 
+    private boolean First = true;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -179,7 +180,7 @@ public class SimulationActivity extends AppCompatActivity {
         // [ Simulation ]
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inSampleSize = 2;
-        Bitmap bitmap = BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.guide_arrow_blue, options);
+        Bitmap bitmap = BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.current_point, options);
 
         tmapview.setIcon(bitmap);
         tmapview.setIconVisibility(true);
@@ -206,6 +207,7 @@ public class SimulationActivity extends AppCompatActivity {
         });
 
         simulation();
+
     }   // onCreate
 
     // [ StartPoint & EndPoint 설정 ]
@@ -251,10 +253,13 @@ public class SimulationActivity extends AppCompatActivity {
         tmapview.setMapType(TMapView.MAPTYPE_STANDARD);     // STANDARD: 일반지도 / SATELLITE: 위성지도[미지원] / HYBRID: 하이브리드[미지원] / TRAFFIC: 실시간 교통지도
         tmapview.setCompassMode(true);                      // 단말의 방향에 따라 움직이는 나침반 모드
         tmapview.setTrackingMode(true);                     // 화면중심을 단말의 현재위치로 이동시켜주는 모드
-        tmapview.setMapPosition(TMapView.POSITION_NAVI);    // 네비게이션 모드 ( 화면 중심의 아래쪽으로 중심좌표를 설정 )
+        tmapview.setMapPosition(TMapView.MAPTYPE_STANDARD);    // 네비게이션 모드 ( 화면 중심의 아래쪽으로 중심좌표를 설정 )
         tMapLayout.addView(tmapview);
     }   // [ End initMapView ]
 
+    public void rightGPSValue(){
+
+    }
     // [ SimulationCoordinates 위도 & 경도 설정 ]
     public void setGPSValue(){
         Log.i(TAG, " [ Simulation Activity Set GPS Value ]");
@@ -522,7 +527,7 @@ public class SimulationActivity extends AppCompatActivity {
         // [ 출발지 ]
         // [ img direction 이미지를 설정한다. ]
         // [ 다음 GPS지점과 다음 방향지점을 알기위해 각각의 index값을 ++ ]
-        Toast.makeText(getApplicationContext(), "모의주행을 시작합니다.", Toast.LENGTH_LONG).show();
+        Toast.makeText(getApplicationContext(), "주행을 시작합니다.", Toast.LENGTH_LONG).show();
         Log.i(TAG, "============================== [ SImulation ] ==============================");
         Log.i(TAG, "모의주행을 시작합니다.");
 //        img_direction.setImageResource(R.drawable.direction_11);
@@ -532,16 +537,21 @@ public class SimulationActivity extends AppCompatActivity {
 
         simul_coordinates_index++;
 
+
+
         thread = new Thread(){
             @Override
             public void run() {
+
                 while (threadFlag) {
+
                     try {
-                        Thread.sleep(300);
+                        Thread.sleep(200);
                         // [ turnType == 0 인 경우는 목표지점까지의 거리정보뿐이기때문에 얻을 정보가 없다. 따라서, index를 추가하고 continue; ]
                         if (info_list.get(simul_info_index).getTurnType() == 0){
                             simul_info_index++;
                             simul_turnType = info_list.get(simul_info_index).getTurnType();
+                            Thread.sleep(1000);
                             directionHandler.sendEmptyMessage(0);
                         }
                         handler.sendEmptyMessage(0);
